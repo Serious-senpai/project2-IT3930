@@ -97,13 +97,13 @@ class Database:
                     EPOCH,
                 )
                 await execute(scripts_dir / "generate_id.sql")
+                await execute(scripts_dir / "violations_view.sql")
+                await execute(scripts_dir / "refutations_view.sql")
 
                 await execute(scripts_dir / "create_refutation.sql")
                 await execute(scripts_dir / "create_transaction.sql")
                 await execute(scripts_dir / "create_violation.sql")
-                await execute(scripts_dir / "refutations_view.sql")
                 await execute(scripts_dir / "respond_refutation.sql")
-                await execute(scripts_dir / "violations_view.sql")
 
     async def close(self) -> None:
         if self.__pool is not None:
