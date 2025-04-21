@@ -13,7 +13,7 @@ router = APIRouter(prefix="/violations")
 
 @router.get("/")
 async def get_violations(
-    id: Annotated[Optional[int], Query(description="Filter by refutation ID")] = None,
+    id: Annotated[Optional[int], Query(description="Filter by violation ID")] = None,
     plate: Annotated[Optional[str], Query(description="Filter by plate number")] = None,
 ) -> List[Violation]:
     """Query all violations from the database"""
