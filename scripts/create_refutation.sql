@@ -9,5 +9,6 @@ BEGIN
     EXECUTE generate_id @Id = @Id OUTPUT
 
     INSERT INTO Refutations (id, violation_id, message, response)
+    OUTPUT INSERTED.id
     VALUES (@Id, @ViolationId, @Message, NULL)
 END

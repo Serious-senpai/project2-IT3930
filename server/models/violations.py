@@ -2,20 +2,43 @@ from __future__ import annotations
 
 from typing import List, Literal, Optional
 
+from pydantic import BaseModel
 from pyodbc import Row  # type: ignore
 
 from .snowflake import Snowflake
 from ..database import Database
 
 
-__all__ = ("Violation",)
+__all__ = ("ViolationBody", "Violation")
 
 
-class Violation(Snowflake):
+class ViolationBody(BaseModel):
     category: Literal[0, 1, 2]
     plate: str
     fine_vnd: int
     video_url: str
+
+    async def create(self) -> Violation:
+        async with Database.instance.pool.acquire() as conn:
+            async with conn.cursor() as cursor:
+                await cursor.execute(
+                    "EXECUTE create_violation @Category = ?, @Plate = ?, @FineVnd = ?, @VideoUrl = ?",
+                    self.category,
+                    self.plate,
+                    self.fine_vnd,
+                    self.video_url,
+                )
+
+                id = await cursor.fetchval()
+                return Violation(
+                    id=id,
+                    refutations_count=0,
+                    transaction_id=None,
+                    **self.model_dump(),
+                )
+
+
+class Violation(Snowflake, ViolationBody):
     refutations_count: int
     transaction_id: Optional[int]
 
@@ -33,8 +56,7 @@ class Violation(Snowflake):
 
     @classmethod
     async def query(cls, *, id: Optional[int] = None) -> List[Violation]:
-        db = Database.instance
-        async with db.pool.acquire() as conn:
+        async with Database.instance.pool.acquire() as conn:
             async with conn.cursor() as cursor:
 
                 if id is None:

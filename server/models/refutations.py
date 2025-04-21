@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import List, Optional
 
+from pydantic import BaseModel
 from pyodbc import Row  # type: ignore
 
 from .snowflake import Snowflake
@@ -9,7 +10,24 @@ from .violations import Violation
 from ..database import Database
 
 
-__all__ = ("Refutation",)
+__all__ = ("RefutationBody", "Refutation")
+
+
+class RefutationBody(BaseModel):
+    violation_id: int
+    message: str
+
+    async def create(self) -> Snowflake:
+        async with Database.instance.pool.acquire() as conn:
+            async with conn.cursor() as cursor:
+                await cursor.execute(
+                    "EXECUTE create_refutation @ViolationId = ?, @Message = ?",
+                    self.violation_id,
+                    self.message,
+                )
+
+                id = await cursor.fetchval()
+                return Snowflake(id=id)
 
 
 class Refutation(Snowflake):
@@ -28,8 +46,7 @@ class Refutation(Snowflake):
 
     @classmethod
     async def query(cls, *, id: Optional[int] = None) -> List[Refutation]:
-        db = Database.instance
-        async with db.pool.acquire() as conn:
+        async with Database.instance.pool.acquire() as conn:
             async with conn.cursor() as cursor:
 
                 if id is None:

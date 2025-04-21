@@ -4,7 +4,7 @@ from typing import List
 
 from fastapi import APIRouter, HTTPException
 
-from ..models import Violation
+from ..models import Violation, ViolationBody
 
 
 __all__ = ()
@@ -15,6 +15,11 @@ router = APIRouter(prefix="/violations")
 async def get_violations() -> List[Violation]:
     """Query all violations from the database"""
     return await Violation.query()
+
+
+@router.post("/")
+async def create_violation(body: ViolationBody) -> Violation:
+    return await body.create()
 
 
 @router.get("/{violation_id}")
