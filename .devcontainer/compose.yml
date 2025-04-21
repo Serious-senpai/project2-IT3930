@@ -1,0 +1,32 @@
+# Reference: https://docs.docker.com/reference/compose-file/
+name: project2
+
+services:
+  database:
+    container_name: mssql-server
+    environment:
+      ACCEPT_EULA: Y
+      MSSQL_SA_PASSWORD: Project2@123
+      MSSQL_PID: Developer
+      MSSQL_MEMORY_LIMIT_MB: 2048
+      MSSQL_TCP_PORT: 1433
+    hostname: database
+    image: mcr.microsoft.com/mssql/server:2022-latest
+
+  devcontainer:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    command: bash -c "sleep infinity"
+    container_name: devcontainer
+    environment:
+      PORT: 8000
+      MSSQL_HOST: database
+      MSSQL_DATABASE: master
+      MSSQL_USER: sa
+      MSSQL_PASSWORD: Project2@123
+    ports:
+      - 8000:8000
+    volumes:
+      - ..:/workspaces/project2
+    working_dir: /workspaces/project2

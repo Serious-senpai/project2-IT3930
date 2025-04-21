@@ -1,0 +1,64 @@
+name: Lint
+
+on: [ push, pull_request ]
+
+permissions:
+  contents: read
+
+jobs:
+  autopep8:
+    name: Run autopep8
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: pip install -r dev-requirements.txt
+
+      - name: Run autopep8
+        run: autopep8 --exit-code --diff -aaar .
+
+  mypy:
+    name: Run mypy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: pip install -r dev-requirements.txt
+
+      - name: Run mypy
+        run: mypy --follow-untyped-imports .
+
+  flake8:
+    name: Run flake8
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: pip install -r dev-requirements.txt
+
+      - name: Run flake8
+        run: flake8 .
