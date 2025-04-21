@@ -12,8 +12,8 @@ async def main() -> None:
     async with Database.instance.pool.acquire() as conn:
         async with conn.cursor() as cursor:
             await cursor.executemany(
-                "EXECUTE create_violation @Category = ?, @Plate = ?, @Fine_vnd = ?",
-                [(i % 3, f"29T1-{i:05}", i * 1000) for i in range(100)]
+                "EXECUTE create_violation @Category = ?, @Plate = ?, @FineVnd = ?, @VideoUrl = ?",
+                [(i % 3, f"29T1-{i:05}", i * 1000, "https://files.catbox.moe/t32ctt.mp4") for i in range(100)]
             )
 
             await cursor.execute("SELECT id FROM Violations")

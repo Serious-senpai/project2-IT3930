@@ -37,7 +37,8 @@ IF NOT EXISTS (SELECT 1 FROM sys.objects WHERE name = 'Violations' AND type = 'U
         id BIGINT PRIMARY KEY,
         category TINYINT NOT NULL CHECK (category IN (0, 1, 2)),
         plate NVARCHAR(12) NOT NULL,
-        fine_vnd BIGINT NOT NULL
+        fine_vnd BIGINT NOT NULL,
+        video_url NVARCHAR(2048) NOT NULL
     )
 
 IF NOT EXISTS (SELECT 1 FROM sys.objects WHERE name = 'Refutations' AND type = 'U')

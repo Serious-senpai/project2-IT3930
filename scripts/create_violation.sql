@@ -1,7 +1,8 @@
 CREATE OR ALTER PROCEDURE create_violation
     @Category TINYINT,
-    @Plate VARCHAR(12),
-    @Fine_vnd BIGINT
+    @Plate NVARCHAR(12),
+    @FineVnd BIGINT,
+    @VideoUrl NVARCHAR(2048)
 AS
 BEGIN
     SET NOCOUNT ON
@@ -9,6 +10,6 @@ BEGIN
     DECLARE @Id BIGINT
     EXECUTE generate_id @Id = @Id OUTPUT
 
-    INSERT INTO Violations (id, category, plate, fine_vnd)
-    VALUES (@Id, @Category, @Plate, @Fine_vnd)
+    INSERT INTO Violations (id, category, plate, fine_vnd, video_url)
+    VALUES (@Id, @Category, @Plate, @FineVnd, @VideoUrl)
 END

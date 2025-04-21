@@ -15,6 +15,7 @@ class Violation(Snowflake):
     category: Literal[0, 1, 2]
     plate: str
     fine_vnd: int
+    video_url: str
     refutations_count: int
     transaction_id: Optional[int]
 
@@ -25,6 +26,7 @@ class Violation(Snowflake):
             category=row.v_category,
             plate=row.v_plate,
             fine_vnd=row.v_fine_vnd,
+            video_url=row.v_video_url,
             refutations_count=row.v_refutations_count,
             transaction_id=row.v_transaction_id,
         )
