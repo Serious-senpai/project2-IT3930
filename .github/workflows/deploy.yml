@@ -35,12 +35,6 @@ jobs:
       with:
         python-version: "3.13"
 
-    - name: Create and start virtual environment
-      run: python -m venv venv
-
-    - name: Install dependencies
-      run: venv/bin/pip install -r requirements.txt
-
     - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v3
       timeout-minutes: 30
