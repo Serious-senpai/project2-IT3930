@@ -55,14 +55,38 @@ class Violation(Snowflake, ViolationBody):
         )
 
     @classmethod
-    async def query(cls, *, id: Optional[int] = None) -> List[Violation]:
+    async def query(
+        cls,
+        *,
+        id: Optional[int] = None,
+        plate: Optional[str] = None,
+    ) -> List[Violation]:
+        if plate is not None and len(plate) > 12:
+            return []
+
         async with Database.instance.pool.acquire() as conn:
             async with conn.cursor() as cursor:
+                conditions = (
+                    None if id is None else "v_id = ?",
+                    None if plate is None else "v_plate = ?",
+                )
+                where = " AND ".join(c for c in conditions if c is not None)
 
-                if id is None:
-                    await cursor.execute("SELECT * FROM violations_view")
+                if len(where) > 0:
+                    await cursor.execute(
+                        f"SELECT * FROM violations_view WHERE {where}",
+                        *[v for v in (id, plate) if v is not None],
+                    )
                 else:
-                    await cursor.execute("SELECT * FROM violations_view WHERE v_id = ?", id)
+                    await cursor.execute("SELECT * FROM violations_view")
 
                 rows = await cursor.fetchall()
                 return [cls.from_row(row) for row in rows]
+
+    @staticmethod
+    async def delete(violation: Snowflake) -> bool:
+        async with Database.instance.pool.acquire() as conn:
+            async with conn.cursor() as cursor:
+                await cursor.execute("EXECUTE delete_violation @Id = ?", violation.id)
+                rows = await cursor.fetchall()
+                return len(rows) > 0

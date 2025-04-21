@@ -76,7 +76,7 @@ class Database:
             os.close(fd)
         except FileExistsError:
             return
-        else:
+        finally:
             atexit.register(lock_file.unlink, missing_ok=True)
 
         async with pool.acquire() as connection:
@@ -104,6 +104,9 @@ class Database:
                 await execute(scripts_dir / "create_transaction.sql")
                 await execute(scripts_dir / "create_violation.sql")
                 await execute(scripts_dir / "respond_refutation.sql")
+
+                await execute(scripts_dir / "delete_refutation.sql")
+                await execute(scripts_dir / "delete_violation.sql")
 
     async def close(self) -> None:
         if self.__pool is not None:

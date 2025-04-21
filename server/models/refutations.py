@@ -45,14 +45,35 @@ class Refutation(Snowflake):
         )
 
     @classmethod
-    async def query(cls, *, id: Optional[int] = None) -> List[Refutation]:
+    async def query(
+        cls,
+        *,
+        id: Optional[int] = None,
+        plate: Optional[str] = None,
+    ) -> List[Refutation]:
         async with Database.instance.pool.acquire() as conn:
             async with conn.cursor() as cursor:
+                conditions = (
+                    None if id is None else "r_id = ?",
+                    None if plate is None else "v_plate = ?",
+                )
+                where = " AND ".join(c for c in conditions if c is not None)
 
-                if id is None:
-                    await cursor.execute("SELECT * FROM refutations_view")
+                if len(where) > 0:
+                    await cursor.execute(
+                        f"SELECT * FROM refutations_view WHERE {where}",
+                        *[v for v in (id, plate) if v is not None],
+                    )
                 else:
-                    await cursor.execute("SELECT * FROM refutations_view WHERE r_id = ?", id)
+                    await cursor.execute("SELECT * FROM refutations_view")
 
                 rows = await cursor.fetchall()
                 return [cls.from_row(row) for row in rows]
+
+    @staticmethod
+    async def delete(refutation: Snowflake) -> bool:
+        async with Database.instance.pool.acquire() as conn:
+            async with conn.cursor() as cursor:
+                await cursor.execute("EXECUTE delete_refutation @Id = ?", refutation.id)
+                rows = await cursor.fetchall()
+                return len(rows) > 0
