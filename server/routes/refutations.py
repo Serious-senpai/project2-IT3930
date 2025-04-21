@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Annotated, List, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from pyodbc import IntegrityError  # type: ignore
 
 from ..models import Refutation, RefutationBody, Snowflake
@@ -14,8 +14,8 @@ router = APIRouter(prefix="/refutations")
 
 @router.get("/")
 async def get_refutations(
-    id: Annotated[Optional[int], "Filter by refutation ID"] = None,
-    plate: Annotated[Optional[str], "Filter by plate number"] = None,
+    id: Annotated[Optional[int], Query(description="Filter by refutation ID")] = None,
+    plate: Annotated[Optional[str], Query(description="Filter by plate number")] = None,
 ) -> List[Refutation]:
     """Query refutations from the database"""
     return await Refutation.query(id=id, plate=plate)
@@ -31,7 +31,13 @@ async def create_refutation(body: RefutationBody) -> Snowflake:
         raise HTTPException(status_code=404, detail=f"No violation with ID {body.violation_id}")
 
 
-@router.get("/{refutation_id}")
+@router.get(
+    "/{refutation_id}",
+    responses={
+        200: {"description": "The refutation with the given ID"},
+        404: {"description": "No refutation was found"},
+    },
+)
 async def get_refutation(refutation_id: int) -> Refutation:
     """Query a refutation by its ID"""
     refutation = await Refutation.query(id=refutation_id)
@@ -45,6 +51,10 @@ async def get_refutation(refutation_id: int) -> Refutation:
     "/{refutation_id}",
     response_model=None,
     status_code=204,
+    responses={
+        204: {"description": "The operation completed successfully"},
+        404: {"description": "No refutation was found"},
+    }
 )
 async def delete_refutation(refutation_id: int) -> None:
     """Delete a refutation by its ID"""
