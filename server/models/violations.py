@@ -51,7 +51,7 @@ class Violation(Snowflake):
             async with connection.cursor() as cursor:
                 builder = SQLBuildHelper(
                     "SELECT * FROM view_violations",
-                    f"ORDER BY violation_id DESC OFFSET 0 ROWS FETCH NEXT {DB_PAGINATION_QUERY} ROWS ONLY",
+                    ("ORDER BY violation_id DESC OFFSET 0 ROWS FETCH NEXT ? ROWS ONLY", (DB_PAGINATION_QUERY,)),
                 ).add_condition(
                     "violation_id = ?",
                     violation_id,

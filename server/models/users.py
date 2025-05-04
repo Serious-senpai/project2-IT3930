@@ -46,7 +46,7 @@ class User(Snowflake):
             async with connection.cursor() as cursor:
                 builder = SQLBuildHelper(
                     "SELECT * FROM view_users",
-                    f"ORDER BY user_id DESC OFFSET 0 ROWS FETCH NEXT {DB_PAGINATION_QUERY} ROWS ONLY",
+                    ("ORDER BY user_id DESC OFFSET 0 ROWS FETCH NEXT ? ROWS ONLY", (DB_PAGINATION_QUERY,)),
                 ).add_condition(
                     "user_id = ?",
                     user_id,

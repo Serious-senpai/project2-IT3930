@@ -4,7 +4,7 @@ import secrets
 import string
 from datetime import datetime, timedelta, timezone
 from hashlib import sha512
-from typing import Any, Callable, List, Optional, TypeVar, TYPE_CHECKING
+from typing import Any, Callable, List, Optional, Tuple, TypeVar, Union, TYPE_CHECKING
 
 from .config import EPOCH
 
@@ -17,18 +17,23 @@ class SQLBuildHelper:
 
     __slots__ = ("__pre_query", "__post_query", "__conditions", "__values")
     if TYPE_CHECKING:
-        __pre_query: str
-        __post_query: str
+        __pre_query: Tuple[str, Tuple[Any, ...]]
+        __post_query: Tuple[str, Tuple[Any, ...]]
         __conditions: List[str]
         __values: List[Any]
 
-    def __init__(self, pre_query: str, post_query: str = "") -> None:
-        self.__pre_query = pre_query
-        self.__post_query = post_query
+    def __init__(
+        self,
+        pre_query: Union[str, Tuple[str, Tuple[Any, ...]]],
+        post_query: Union[str, Tuple[str, Tuple[Any, ...]]],
+    ) -> None:
+        self.__pre_query = (pre_query, ()) if isinstance(pre_query, str) else pre_query
+        self.__post_query = (post_query, ()) if isinstance(post_query, str) else post_query
         self.__conditions = []
         self.__values = []
 
     def add_condition(self, condition: str, value: Any, *, not_null_param: bool = True) -> SQLBuildHelper:
+        """Warning: `condition` is formatted directly into the SQL query."""
         if not_null_param and value is None:
             return self
 
@@ -37,18 +42,16 @@ class SQLBuildHelper:
         return self
 
     def execute(self, func: Callable[..., T]) -> T:
-        # Shallow copy `__values` as we may modify it
-        values = self.__values.copy()
+        pre_query, pre_query_values = self.__pre_query
+        post_query, post_query_values = self.__post_query
 
-        parts = [self.__pre_query]
+        parts = [pre_query]
         if self.__conditions:
             parts.append("WHERE")
             parts.append(" AND ".join(self.__conditions))
 
-        parts.append(self.__post_query)
-        print("\n".join(parts), file=__import__("sys").stderr)
-        print(values, file=__import__("sys").stderr)
-        return func("\n".join(parts), *values)
+        parts.append(post_query)
+        return func("\n".join(parts), *pre_query_values, *self.__values, *post_query_values)
 
 
 def hash_password(password: str, *, salt: Optional[str] = None) -> str:

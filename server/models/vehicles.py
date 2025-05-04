@@ -41,7 +41,7 @@ class Vehicle(BaseModel):
             async with connection.cursor() as cursor:
                 builder = SQLBuildHelper(
                     "SELECT * FROM view_vehicles",
-                    f"ORDER BY vehicle_plate ASC OFFSET 0 ROWS FETCH NEXT {DB_PAGINATION_QUERY} ROWS ONLY",
+                    ("ORDER BY vehicle_plate DESC OFFSET 0 ROWS FETCH NEXT ? ROWS ONLY", (DB_PAGINATION_QUERY,)),
                 ).add_condition(
                     "vehicle_plate LIKE ?",
                     vehicle_plate,

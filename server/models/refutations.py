@@ -6,6 +6,7 @@ from pydantic import Field
 from pyodbc import Row  # type: ignore
 
 from .snowflake import Snowflake
+from .users import User
 from .violations import Violation
 from ..config import DB_PAGINATION_QUERY
 from ..database import Database
@@ -20,6 +21,7 @@ class Refutation(Snowflake):
 
     message: Annotated[str, Field(description="The refutation message")]
     response: Annotated[Optional[str], Field(description="The response to the refutation")]
+    author: Annotated[User, Field(description="The user who created the refutation")]
     violation: Annotated[Violation, Field(description="The violation associated with this refutation")]
 
     @classmethod
@@ -28,6 +30,14 @@ class Refutation(Snowflake):
             id=row.refutation_id,
             message=row.refutation_message,
             response=row.refutation_response,
+            author=User(
+                id=row.author_id,
+                fullname=row.author_fullname,
+                phone=row.author_phone,
+                permissions=row.author_permissions,
+                vehicles_count=row.author_vehicles_count,
+                violations_count=row.author_violations_count,
+            ),
             violation=Violation.from_row(row),
         )
 
@@ -46,7 +56,7 @@ class Refutation(Snowflake):
             async with connection.cursor() as cursor:
                 builder = SQLBuildHelper(
                     "SELECT * FROM view_refutations",
-                    f"ORDER BY refutation_id DESC OFFSET 0 ROWS FETCH NEXT {DB_PAGINATION_QUERY} ROWS ONLY",
+                    ("ORDER BY refutation_id DESC OFFSET 0 ROWS FETCH NEXT ? ROWS ONLY", (DB_PAGINATION_QUERY,)),
                 ).add_condition(
                     "refutation_id = ?",
                     refutation_id,

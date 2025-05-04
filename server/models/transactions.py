@@ -51,7 +51,7 @@ class Transaction(Snowflake):
             async with connection.cursor() as cursor:
                 builder = SQLBuildHelper(
                     "SELECT * FROM view_transactions",
-                    f"ORDER BY transaction_id DESC OFFSET 0 ROWS FETCH NEXT {DB_PAGINATION_QUERY} ROWS ONLY",
+                    ("ORDER BY transaction_id DESC OFFSET 0 ROWS FETCH NEXT ? ROWS ONLY", (DB_PAGINATION_QUERY,)),
                 ).add_condition(
                     "transaction_id = ?",
                     transaction_id,

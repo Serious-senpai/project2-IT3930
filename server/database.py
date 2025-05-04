@@ -3,6 +3,7 @@ from __future__ import annotations
 import atexit
 import os
 import secrets
+import sys
 from pathlib import Path
 from typing import Any, ClassVar, Optional, TYPE_CHECKING
 
@@ -78,6 +79,8 @@ class Database:
             return
         finally:
             atexit.register(lock_file.unlink, missing_ok=True)
+
+        print(f"Process {os.getpid()} is initializing database...", file=sys.stderr)
 
         async with pool.acquire() as connection:
             async with connection.cursor() as cursor:
