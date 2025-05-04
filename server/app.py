@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import asyncio
+import random
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Dict
 
 from fastapi import FastAPI, Request
 from fastapi.responses import RedirectResponse
+from fastapi.routing import APIRoute
 
 from .database import Database
 
@@ -27,9 +29,14 @@ async def __lifespan(app: FastAPI) -> AsyncGenerator[None]:
     await Database.instance.close()
 
 
+def __random_operation_id(route: APIRoute) -> str:
+    return f"{route.name}-{random.randint(0, 9999):04}"
+
+
 app = FastAPI(
     title="Project 2 (IT3930) API",
     lifespan=__lifespan,
+    generate_unique_id_function=__random_operation_id,
 )
 
 

@@ -3,6 +3,9 @@ name: project2
 
 services:
   database:
+    build:
+      context: ..
+      dockerfile: .devcontainer/database.Dockerfile
     container_name: mssql-server
     environment:
       ACCEPT_EULA: Y
@@ -11,18 +14,19 @@ services:
       MSSQL_MEMORY_LIMIT_MB: 2048
       MSSQL_TCP_PORT: 1433
     hostname: database
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    ports:
+      - 1433:1433
 
   devcontainer:
     build:
       context: ..
-      dockerfile: .devcontainer/Dockerfile
+      dockerfile: .devcontainer/devcontainer.Dockerfile
     command: bash -c "sleep infinity"
     container_name: devcontainer
     environment:
       PORT: 8000
       MSSQL_HOST: database
-      MSSQL_DATABASE: master
+      MSSQL_DATABASE: test
       MSSQL_USER: sa
       MSSQL_PASSWORD: Project2@123
     ports:

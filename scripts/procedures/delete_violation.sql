@@ -5,13 +5,13 @@ BEGIN
     SET NOCOUNT ON
 
     BEGIN TRANSACTION
-        DELETE FROM Transactions
+        DELETE FROM IT3930_Transactions
         WHERE violation_id = @Id
 
-        DELETE FROM Refutations
+        DELETE FROM IT3930_Refutations
         WHERE violation_id = @Id
 
-        DELETE FROM Violations
+        DELETE FROM IT3930_Violations
         OUTPUT DELETED.id
         WHERE id = @Id
     COMMIT TRANSACTION

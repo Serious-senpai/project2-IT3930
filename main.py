@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from server.app import app
 from server.config import PORT
-from server.routes import refutations_router, violations_router
+from server.routes import routers
 
 
 class __Namespace(argparse.Namespace):
@@ -35,8 +35,11 @@ __parser.add_argument("--cors", action="store_true", help="Enable CORS for the H
 
 __parser.parse_args(namespace=namespace)
 
-app.include_router(refutations_router)
-app.include_router(violations_router)
+
+for router in routers:
+    app.include_router(router)
+
+
 if namespace.cors:
     app.add_middleware(
         CORSMiddleware,

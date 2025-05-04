@@ -3,28 +3,60 @@ from __future__ import annotations
 import secrets
 import string
 from datetime import datetime, timedelta, timezone
-from hashlib import sha256
-from typing import Optional
+from hashlib import sha512
+from typing import Any, Callable, List, Optional, TypeVar, TYPE_CHECKING
 
 from .config import EPOCH
 
 
-__all__ = (
-    "hash_password",
-    "check_password",
-    "secure_hex_string",
-    "since_epoch",
-    "from_epoch",
-    "snowflake_time",
-)
+__all__ = ()
+T = TypeVar("T")
+
+
+class SQLBuildHelper:
+
+    __slots__ = ("__pre_query", "__post_query", "__conditions", "__values")
+    if TYPE_CHECKING:
+        __pre_query: str
+        __post_query: str
+        __conditions: List[str]
+        __values: List[Any]
+
+    def __init__(self, pre_query: str, post_query: str = "") -> None:
+        self.__pre_query = pre_query
+        self.__post_query = post_query
+        self.__conditions = []
+        self.__values = []
+
+    def add_condition(self, condition: str, value: Any, *, not_null_param: bool = True) -> SQLBuildHelper:
+        if not_null_param and value is None:
+            return self
+
+        self.__conditions.append(f"({condition})")
+        self.__values.append(value)
+        return self
+
+    def execute(self, func: Callable[..., T]) -> T:
+        # Shallow copy `__values` as we may modify it
+        values = self.__values.copy()
+
+        parts = [self.__pre_query]
+        if self.__conditions:
+            parts.append("WHERE")
+            parts.append(" AND ".join(self.__conditions))
+
+        parts.append(self.__post_query)
+        print("\n".join(parts), file=__import__("sys").stderr)
+        print(values, file=__import__("sys").stderr)
+        return func("\n".join(parts), *values)
 
 
 def hash_password(password: str, *, salt: Optional[str] = None) -> str:
-    """Hash a password using SHA-256 and a random salt."""
+    """Hash a password using SHA-512 and a random salt."""
     if salt is None:
         salt = secure_hex_string(8)
 
-    return sha256((password + salt).encode("utf-8")).hexdigest() + salt
+    return sha512((password + salt).encode("utf-8")).hexdigest() + salt
 
 
 def check_password(password: str, *, hashed: str) -> bool:

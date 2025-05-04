@@ -81,7 +81,6 @@ class Database:
 
         async with pool.acquire() as connection:
             async with connection.cursor() as cursor:
-
                 async def execute(file: Path, *args: Any) -> None:
                     try:
                         with file.open("r", encoding="utf-8") as sql:
@@ -96,17 +95,17 @@ class Database:
                     secrets.token_hex(32),
                     EPOCH,
                 )
-                await execute(scripts_dir / "generate_id.sql")
-                await execute(scripts_dir / "violations_view.sql")
-                await execute(scripts_dir / "refutations_view.sql")
 
-                await execute(scripts_dir / "create_refutation.sql")
-                await execute(scripts_dir / "create_transaction.sql")
-                await execute(scripts_dir / "create_violation.sql")
-                await execute(scripts_dir / "respond_refutation.sql")
+                await execute(scripts_dir / "procedures" / "generate_id.sql")
+                for file in scripts_dir.glob("procedures/*.sql"):
+                    if file.stem != "generate_id":
+                        await execute(file)
 
-                await execute(scripts_dir / "delete_refutation.sql")
-                await execute(scripts_dir / "delete_violation.sql")
+                await execute(scripts_dir / "views" / "view_users.sql")
+                await execute(scripts_dir / "views" / "view_vehicles.sql")
+                await execute(scripts_dir / "views" / "view_violations.sql")
+                await execute(scripts_dir / "views" / "view_refutations.sql")
+                await execute(scripts_dir / "views" / "view_transactions.sql")
 
     async def close(self) -> None:
         if self.__pool is not None:

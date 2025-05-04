@@ -1,57 +1,53 @@
 from __future__ import annotations
 
-from typing import Annotated, List, Optional
+from typing import Annotated, List, Literal, Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Query
 
-from ..models import Snowflake, Violation, ViolationBody
+from ..config import DB_PAGINATION_QUERY
+from ..models import Violation
 
 
 __all__ = ()
 router = APIRouter(prefix="/violations")
 
 
-@router.get("/")
-async def get_violations(
-    id: Annotated[Optional[int], Query(description="Filter by violation ID")] = None,
-    plate: Annotated[Optional[str], Query(description="Filter by plate number")] = None,
-) -> List[Violation]:
-    """Query all violations from the database"""
-    return await Violation.query(id=id, plate=plate)
-
-
-@router.post("/")
-async def create_violation(body: ViolationBody) -> Violation:
-    return await body.create()
-
-
 @router.get(
-    "/{violation_id}",
-    responses={
-        200: {"description": "The violation with the given ID"},
-        404: {"description": "No violation was found"},
-    },
+    "/",
+    summary="Query violations",
+    description=f"Query a maximum of {DB_PAGINATION_QUERY} violations from the database. The result is sorted by violation ID in descending order.",
 )
-async def get_violation(violation_id: int) -> Violation:
-    """Query a violation by its ID"""
-    violation = await Violation.query(id=violation_id)
-    try:
-        return violation[0]
-    except IndexError:
-        raise HTTPException(status_code=404, detail=f"No violation with ID {violation_id}")
-
-
-@router.delete(
-    "/{violation_id}",
-    response_model=None,
-    status_code=204,
-    responses={
-        204: {"description": "The operation completed successfully"},
-        404: {"description": "No violation was found"},
-    },
-)
-async def delete_violation(violation_id: int) -> None:
-    """Delete a violation by its ID"""
-    snowflake = Snowflake(id=violation_id)
-    if not await Violation.delete(snowflake):
-        raise HTTPException(status_code=404, detail=f"No violation with ID {violation_id}")
+async def get_violations(
+    violation_id: Annotated[Optional[int], Query(description="Filter by violation ID")] = None,
+    violation_category: Annotated[Optional[Literal[0, 1, 2]], Query(description="Filter by violation category")] = None,
+    violation_fine_vnd: Annotated[Optional[int], Query(description="Filter by the fine amount in VND")] = None,
+    violation_video_url: Annotated[
+        Optional[str],
+        Query(
+            description="Filter by video URL [pattern]"
+            "(https://learn.microsoft.com/en-us/sql/t-sql/language-elements/like-transact-sql?view=sql-server-ver16#pattern).",
+        ),
+    ] = None,
+    violation_refutations_count: Annotated[Optional[int], Query(description="Filter by the number of refutations")] = None,
+    vehicle_plate: Annotated[
+        Optional[str],
+        Query(
+            description="Filter by vehicle plate [pattern]"
+            "(https://learn.microsoft.com/en-us/sql/t-sql/language-elements/like-transact-sql?view=sql-server-ver16#pattern).",
+        ),
+    ] = None,
+    user_id: Annotated[Optional[int], Query(description="Filter by violator ID")] = None,
+    min_id: Annotated[Optional[int], Query(description="Minimum value for violation ID in the result set.")] = None,
+    max_id: Annotated[Optional[int], Query(description="Maximum value for violation ID in the result set.")] = None,
+) -> List[Violation]:
+    return await Violation.query(
+        violation_id=violation_id,
+        violation_category=violation_category,
+        violation_fine_vnd=violation_fine_vnd,
+        violation_video_url=violation_video_url,
+        violation_refutations_count=violation_refutations_count,
+        vehicle_plate=vehicle_plate,
+        user_id=user_id,
+        min_id=min_id,
+        max_id=max_id,
+    )
