@@ -43,7 +43,7 @@ async def root() -> RedirectResponse:
 
 @app.get("/loop", include_in_schema=False)
 async def loop() -> PlainTextResponse:
-    return PlainTextResponse(asyncio.get_event_loop())
+    return PlainTextResponse(str(asyncio.get_event_loop()))
 
 
 @app.get("/headers", include_in_schema=False)
@@ -71,4 +71,4 @@ async def whatsmyip(request: Request) -> PlainTextResponse:
     summary="List all routes, including hidden ones",
 )
 async def routes(request: Request) -> List[str]:
-    return [getattr(route, "path") for route in app.routes]
+    return [getattr(route, "path", "???") for route in app.routes]
