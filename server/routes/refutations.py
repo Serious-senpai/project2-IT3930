@@ -33,6 +33,7 @@ async def get_refutations(
             "(https://learn.microsoft.com/en-us/sql/t-sql/language-elements/like-transact-sql?view=sql-server-ver16#pattern).",
         ),
     ] = None,
+    author_id: Annotated[Optional[int], Query(description="Filter by author ID")] = None,
     violation_id: Annotated[Optional[int], Query(description="Filter by violation ID")] = None,
     vehicle_plate: Annotated[
         Optional[str],
@@ -49,6 +50,7 @@ async def get_refutations(
         refutation_id=refutation_id,
         refutation_message=refutation_message,
         refutation_response=refutation_response,
+        author_id=author_id,
         violation_id=violation_id,
         vehicle_plate=vehicle_plate,
         user_id=user_id,

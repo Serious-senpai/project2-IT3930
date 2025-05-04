@@ -46,6 +46,7 @@ class Refutation(Snowflake):
         refutation_id: Optional[int] = None,
         refutation_message: Optional[str] = None,
         refutation_response: Optional[str] = None,
+        author_id: Optional[int] = None,
         violation_id: Optional[int] = None,
         vehicle_plate: Optional[str] = None,
         user_id: Optional[int] = None,
@@ -66,6 +67,9 @@ class Refutation(Snowflake):
                 ).add_condition(
                     "refutation_response LIKE ?",
                     refutation_response,
+                ).add_condition(
+                    "author_id = ?",
+                    author_id,
                 ).add_condition(
                     "violation_id = ?",
                     violation_id,
