@@ -10,7 +10,6 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from server.app import app
 from server.config import PORT
-from server.routes import routers
 
 
 class __Namespace(argparse.Namespace):
@@ -34,10 +33,6 @@ __parser.add_argument("--log-level", type=str, default="debug", help="The log le
 __parser.add_argument("--cors", action="store_true", help="Enable CORS for the HTTP server")
 
 __parser.parse_args(namespace=namespace)
-
-
-for router in routers:
-    app.include_router(router)
 
 
 if namespace.cors:

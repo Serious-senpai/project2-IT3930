@@ -1,15 +1,14 @@
 from __future__ import annotations
 
 import asyncio
-import random
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Dict
 
 from fastapi import FastAPI, Request
 from fastapi.responses import RedirectResponse
-from fastapi.routing import APIRoute
 
 from .database import Database
+from .routes import routers
 
 try:
     import uvloop  # type: ignore
@@ -29,15 +28,12 @@ async def __lifespan(app: FastAPI) -> AsyncGenerator[None]:
     await Database.instance.close()
 
 
-def __random_operation_id(route: APIRoute) -> str:
-    return f"{route.name}-{random.randint(0, 9999):04}"
-
-
 app = FastAPI(
     title="Project 2 (IT3930) API",
     lifespan=__lifespan,
-    generate_unique_id_function=__random_operation_id,
 )
+for router in routers:
+    app.include_router(router)
 
 
 @app.get("/", include_in_schema=False)
