@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from typing import Annotated, List, Optional
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 
 from ..config import DB_PAGINATION_QUERY
-from ..models import Refutation
+from ..models import Refutation, User
 
 
 __all__ = ()
@@ -18,6 +18,7 @@ router = APIRouter(prefix="/refutations")
     description=f"Query a maximum of {DB_PAGINATION_QUERY} refutations from the database. The result is sorted by refutation ID in descending order.",
 )
 async def get_refutations(
+    user: Annotated[User, Depends(User.oauth2_decode)],
     refutation_id: Annotated[Optional[int], Query(description="Filter by refutation ID")] = None,
     refutation_message: Annotated[
         Optional[str],
@@ -46,6 +47,17 @@ async def get_refutations(
     min_id: Annotated[Optional[int], Query(description="Minimum value for refutation ID in the result set.")] = None,
     max_id: Annotated[Optional[int], Query(description="Maximum value for refutation ID in the result set.")] = None,
 ) -> List[Refutation]:
+    if not user.permission_obj.administrator and not user.permission_obj.view_users:
+        if author_id is None:
+            author_id = user.id
+        elif author_id != user.id:
+            return []
+
+        if user_id is None:
+            user_id = user.id
+        elif user_id != user.id:
+            return []
+
     return await Refutation.query(
         refutation_id=refutation_id,
         refutation_message=refutation_message,

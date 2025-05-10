@@ -23,6 +23,7 @@ router = APIRouter(prefix="/users")
     description=f"Query a maximum of {DB_PAGINATION_QUERY} users from the database. The result is sorted by user ID in descending order.",
 )
 async def get_users(
+    user: Annotated[User, Depends(User.oauth2_decode)],
     user_id: Annotated[Optional[int], Query(description="Filter by user ID")] = None,
     user_fullname: Annotated[
         Optional[str],
@@ -35,6 +36,12 @@ async def get_users(
     min_id: Annotated[Optional[int], Query(description="Minimum value for user ID in the result set.")] = None,
     max_id: Annotated[Optional[int], Query(description="Maximum value for user ID in the result set.")] = None,
 ) -> List[User]:
+    if not user.permission_obj.administrator and not user.permission_obj.view_users:
+        if user_id is None:
+            user_id = user.id
+        elif user_id != user.id:
+            return []
+
     return await User.query(
         user_id=user_id,
         user_fullname=user_fullname,

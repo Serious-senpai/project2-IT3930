@@ -33,13 +33,17 @@ BEGIN
 END
 
 IF NOT EXISTS (SELECT 1 FROM sys.objects WHERE name = 'IT3930_Users' AND type = 'U')
+BEGIN
     CREATE TABLE IT3930_Users (
         id BIGINT PRIMARY KEY,
         fullname NVARCHAR(255) NOT NULL,
-        phone NVARCHAR(15) UNIQUE NOT NULL,
+        phone VARCHAR(15) UNIQUE NOT NULL,
         permissions BIGINT NOT NULL,
         hashed_password VARCHAR(136) NOT NULL
     )
+    INSERT INTO IT3930_Users
+    VALUES (0, N'Nguyễn Thế Nhật Minh', '0856650960', 1, '2d7748e501f6b8aa941a884b8bc03d2825fcc4897b58631f3a0a48ebcda1094a128cf9fedfd3209251a1f3f71f3b45c95ba2bfd63f6badc10ef3dca304f10684D1a3D7AA')
+END
 
 IF NOT EXISTS (SELECT 1 FROM sys.objects WHERE name = 'IT3930_Vehicles' AND type = 'U')
     CREATE TABLE IT3930_Vehicles (
@@ -51,10 +55,12 @@ IF NOT EXISTS (SELECT 1 FROM sys.objects WHERE name = 'IT3930_Vehicles' AND type
 IF NOT EXISTS (SELECT 1 FROM sys.objects WHERE name = 'IT3930_Violations' AND type = 'U')
     CREATE TABLE IT3930_Violations (
         id BIGINT PRIMARY KEY,
+        creator_id BIGINT NOT NULL,
         category TINYINT NOT NULL CHECK (category IN (0, 1, 2)),
         plate NVARCHAR(12) NOT NULL,
         fine_vnd BIGINT NOT NULL,
         video_url NVARCHAR(2048) NOT NULL,
+        CONSTRAINT FK_Violations_Users FOREIGN KEY (creator_id) REFERENCES IT3930_Users(id),
         CONSTRAINT FK_Violations_Vehicles FOREIGN KEY (plate) REFERENCES IT3930_Vehicles(plate)
     )
 

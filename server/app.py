@@ -7,6 +7,7 @@ from typing import AsyncGenerator, Dict, List
 from fastapi import FastAPI, Request
 from fastapi.responses import PlainTextResponse, RedirectResponse
 
+from .config import ROOT
 from .database import Database
 from .routes import routers
 
@@ -31,6 +32,7 @@ async def __lifespan(app: FastAPI) -> AsyncGenerator[None]:
 app = FastAPI(
     title="Project 2 (IT3930) API",
     lifespan=__lifespan,
+    description=ROOT.joinpath("README.md").read_text(encoding="utf-8"),
 )
 for router in routers:
     app.include_router(router)
@@ -68,7 +70,7 @@ async def whatsmyip(request: Request) -> PlainTextResponse:
 
 @app.get(
     "/routes",
-    summary="List all routes, including hidden ones",
+    summary="List all API routes, including hidden ones",
 )
 async def routes(request: Request) -> List[str]:
     return [getattr(route, "path", "???") for route in app.routes]

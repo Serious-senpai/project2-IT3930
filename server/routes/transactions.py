@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from typing import Annotated, List, Optional
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 
 from ..config import DB_PAGINATION_QUERY
-from ..models import Transaction
+from ..models import Transaction, User
 
 
 __all__ = ()
@@ -18,6 +18,7 @@ router = APIRouter(prefix="/transactions")
     description=f"Query a maximum of {DB_PAGINATION_QUERY} transactions from the database. The result is sorted by transaction ID in descending order.",
 )
 async def get_transactions(
+    user: Annotated[User, Depends(User.oauth2_decode)],
     transaction_id: Annotated[Optional[int], Query(description="Filter by transaction ID")] = None,
     violation_id: Annotated[Optional[int], Query(description="Filter by violation ID")] = None,
     vehicle_plate: Annotated[
@@ -32,6 +33,17 @@ async def get_transactions(
     min_id: Annotated[Optional[int], Query(description="Minimum value for transaction ID in the result set.")] = None,
     max_id: Annotated[Optional[int], Query(description="Maximum value for transaction ID in the result set.")] = None,
 ) -> List[Transaction]:
+    if not user.permission_obj.administrator and not user.permission_obj.view_users:
+        if user_id is None:
+            user_id = user.id
+        elif user_id != user.id:
+            return []
+
+        if payer_id is None:
+            payer_id = user.id
+        elif payer_id != user.id:
+            return []
+
     return await Transaction.query(
         transaction_id=transaction_id,
         violation_id=violation_id,

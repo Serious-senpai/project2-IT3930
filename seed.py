@@ -26,8 +26,8 @@ async def main() -> None:
             )
 
             await cursor.executemany(
-                "EXECUTE create_violation @Category = ?, @Plate = ?, @FineVnd = ?, @VideoUrl = ?",
-                [(i % 3, f"29T1-{i:05}", (i + 1) * 1000, "https://files.catbox.moe/t32ctt.mp4") for i in range(100)]
+                "EXECUTE create_violation @CreatorId = ?, @Category = ?, @Plate = ?, @FineVnd = ?, @VideoUrl = ?",
+                [(0, i % 3, f"29T1-{i:05}", (i + 1) * 1000, "https://files.catbox.moe/t32ctt.mp4") for i in range(100)]
             )
 
             await cursor.execute("SELECT id FROM IT3930_Violations ORDER BY fine_vnd")

@@ -2,6 +2,12 @@ CREATE OR ALTER VIEW view_transactions AS
     SELECT
         t.id AS transaction_id,
         vl.violation_id,
+        vl.creator_id,
+        vl.creator_fullname,
+        vl.creator_phone,
+        vl.creator_permissions,
+        vl.creator_vehicles_count,
+        vl.creator_violations_count,
         vl.violation_category,
         vl.violation_fine_vnd,
         vl.violation_video_url,

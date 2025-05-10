@@ -8,6 +8,7 @@ from pydantic import Field
 from pyodbc import Row  # type: ignore
 from fastapi.security import OAuth2PasswordBearer
 
+from .permissions import Permission
 from .snowflake import Snowflake
 from ..config import DB_PAGINATION_QUERY
 from ..database import Database
@@ -25,9 +26,13 @@ class User(Snowflake):
 
     fullname: Annotated[str, Field(description="The user's full name")]
     phone: Annotated[str, Field(description="The user's phone number")]
-    permissions: Annotated[int, Field(description="The user's permissions flags")]
+    permissions: Annotated[int, Field(description="The user's permission flags")]
     vehicles_count: Annotated[int, Field(description="The number of vehicles the user has")]
     violations_count: Annotated[int, Field(description="The number of violations the user has")]
+
+    @property
+    def permission_obj(self) -> Permission:
+        return Permission(self.permissions)
 
     @classmethod
     def from_row(cls, row: Row) -> User:
