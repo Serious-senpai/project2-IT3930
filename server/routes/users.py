@@ -1,8 +1,13 @@
 from __future__ import annotations
 
-from typing import Annotated, List, Optional
+from datetime import datetime, timedelta, timezone
+from typing import Annotated, List, Literal, Optional
 
-from fastapi import APIRouter, Query
+import jwt
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
+from pyodbc import IntegrityError  # type: ignore
+from fastapi.security import OAuth2PasswordRequestForm
 
 from ..config import DB_PAGINATION_QUERY
 from ..models import User
@@ -37,3 +42,63 @@ async def get_users(
         min_id=min_id,
         max_id=max_id,
     )
+
+
+class __UserCreationPayload(BaseModel):
+    """Payload for creating a new user"""
+
+    fullname: Annotated[str, Field(description="The user's full name")]
+    phone: Annotated[str, Field(description="The user's phone number")]
+    password: Annotated[str, Field(description="The user's password")]
+
+
+@router.post(
+    "/",
+    summary="Create a new user",
+    description="Create a new user in the database. Returns the ID of the new user.",
+    responses={
+        409: {
+            "description": "User with this phone number already exists.",
+        },
+    },
+)
+async def create_user(payload: __UserCreationPayload) -> int:
+    try:
+        return await User.create(
+            fullname=payload.fullname,
+            phone=payload.phone,
+            password=payload.password,
+        )
+
+    except IntegrityError:
+        raise HTTPException(409, detail="User with this phone number already exists.")
+
+
+class __LoginResponse(BaseModel):
+    access_token: str
+    token_type: Literal["bearer"]
+
+
+@router.post(
+    "/login",
+    summary="Login as an existing user",
+)
+async def login_user(form: Annotated[OAuth2PasswordRequestForm, Depends()]) -> __LoginResponse:
+    id = await User.login(phone=form.username, password=form.password)
+    data = {
+        "id": id,
+        "exp": datetime.now(tz=timezone.utc) + timedelta(minutes=15),
+    }
+
+    return __LoginResponse(
+        access_token=jwt.encode(data, await User.secret_key(), algorithm="HS256"),
+        token_type="bearer",
+    )
+
+
+@router.get(
+    "/@me",
+    summary="Get the current user",
+)
+async def get_current_user(user: Annotated[User, Depends(User.oauth2_decode)]) -> User:
+    return user

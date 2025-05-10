@@ -2,16 +2,22 @@ from __future__ import annotations
 
 from typing import Annotated, List, Optional
 
+import jwt
+from fastapi import Depends, HTTPException
 from pydantic import Field
 from pyodbc import Row  # type: ignore
+from fastapi.security import OAuth2PasswordBearer
 
 from .snowflake import Snowflake
 from ..config import DB_PAGINATION_QUERY
 from ..database import Database
-from ..utils import SQLBuildHelper
+from ..utils import SQLBuildHelper, check_password, hash_password
 
 
 __all__ = ("User",)
+
+
+OAUTH2_SCHEME = OAuth2PasswordBearer("/users/login")
 
 
 class User(Snowflake):
@@ -33,6 +39,29 @@ class User(Snowflake):
             vehicles_count=row.user_vehicles_count,
             violations_count=row.user_violations_count,
         )
+
+    @classmethod
+    async def oauth2_decode(cls, token: Annotated[str, Depends(OAUTH2_SCHEME)]) -> User:
+        error = HTTPException(status_code=401, detail="Invalid authentication credentials")
+        try:
+            payload = jwt.decode(
+                token,
+                await cls.secret_key(),
+                algorithms=["HS256"],
+            )
+        except jwt.PyJWTError:
+            raise error
+
+        try:
+            user_id = payload["id"]
+        except KeyError:
+            raise error
+
+        users = await cls.query(user_id=user_id)
+        try:
+            return users[0]
+        except IndexError:
+            raise error
 
     @staticmethod
     async def query(
@@ -68,3 +97,32 @@ class User(Snowflake):
                 rows = await cursor.fetchall()
 
         return [User.from_row(row) for row in rows]
+
+    @staticmethod
+    async def create(*, fullname: str, phone: str, password: str) -> int:
+        async with Database.instance.pool.acquire() as connection:
+            async with connection.cursor() as cursor:
+                await cursor.execute(
+                    "EXECUTE create_user @Fullname = ?, @Phone = ?, @HashedPassword = ?",
+                    fullname, phone, hash_password(password)
+                )
+                id = await cursor.fetchval()
+                return id
+
+    @classmethod
+    async def login(cls, *, phone: str, password: str) -> Optional[int]:
+        async with Database.instance.pool.acquire() as connection:
+            async with connection.cursor() as cursor:
+                await cursor.execute("SELECT id, hashed_password FROM IT3930_Users WHERE phone = ?", phone)
+                row = await cursor.fetchone()
+                if check_password(password, hashed=row.hashed_password):
+                    return row.id
+
+        return None
+
+    @staticmethod
+    async def secret_key() -> str:
+        async with Database.instance.pool.acquire() as connection:
+            async with connection.cursor() as cursor:
+                await cursor.execute("SELECT value FROM IT3930_Config WHERE name = ?", "session_secret_key")
+                return await cursor.fetchval()
