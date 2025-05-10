@@ -58,6 +58,7 @@ class User(Snowflake):
             raise error
 
         users = await cls.query(user_id=user_id)
+        assert len(users) < 2
         try:
             return users[0]
         except IndexError:
@@ -115,6 +116,9 @@ class User(Snowflake):
             async with connection.cursor() as cursor:
                 await cursor.execute("SELECT id, hashed_password FROM IT3930_Users WHERE phone = ?", phone)
                 row = await cursor.fetchone()
+                if row is None:
+                    return None
+
                 if check_password(password, hashed=row.hashed_password):
                     return row.id
 

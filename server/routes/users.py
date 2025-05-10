@@ -82,9 +82,17 @@ class __LoginResponse(BaseModel):
 @router.post(
     "/login",
     summary="Login as an existing user",
+    responses={
+        401: {
+            "description": "Invalid authentication credentials.",
+        },
+    }
 )
 async def login_user(form: Annotated[OAuth2PasswordRequestForm, Depends()]) -> __LoginResponse:
     id = await User.login(phone=form.username, password=form.password)
+    if id is None:
+        raise HTTPException(401, detail="Invalid authentication credentials.")
+
     data = {
         "id": id,
         "exp": datetime.now(tz=timezone.utc) + timedelta(minutes=15),
