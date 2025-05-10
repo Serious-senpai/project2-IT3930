@@ -33,16 +33,10 @@ async def get_transactions(
     min_id: Annotated[Optional[int], Query(description="Minimum value for transaction ID in the result set.")] = None,
     max_id: Annotated[Optional[int], Query(description="Maximum value for transaction ID in the result set.")] = None,
 ) -> List[Transaction]:
-    if not user.permission_obj.administrator and not user.permission_obj.view_users:
-        if user_id is None:
-            user_id = user.id
-        elif user_id != user.id:
-            return []
-
-        if payer_id is None:
-            payer_id = user.id
-        elif payer_id != user.id:
-            return []
+    if user.permission_obj.administrator or user.permission_obj.view_users:
+        related_to = None
+    else:
+        related_to = user.id
 
     return await Transaction.query(
         transaction_id=transaction_id,
@@ -52,4 +46,5 @@ async def get_transactions(
         payer_id=payer_id,
         min_id=min_id,
         max_id=max_id,
+        related_to=related_to,
     )

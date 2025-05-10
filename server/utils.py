@@ -32,13 +32,13 @@ class SQLBuildHelper:
         self.__conditions = []
         self.__values = []
 
-    def add_condition(self, condition: str, value: Any, *, not_null_param: bool = True) -> SQLBuildHelper:
+    def add_condition(self, condition: str, *values: Any, not_null_params: bool = True) -> SQLBuildHelper:
         """Warning: `condition` is formatted directly into the SQL query."""
-        if not_null_param and value is None:
+        if not_null_params and None in values:
             return self
 
         self.__conditions.append(f"({condition})")
-        self.__values.append(value)
+        self.__values.extend(values)
         return self
 
     def execute(self, func: Callable[..., T]) -> T:

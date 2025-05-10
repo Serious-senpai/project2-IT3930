@@ -42,16 +42,10 @@ async def get_violations(
     min_id: Annotated[Optional[int], Query(description="Minimum value for violation ID in the result set.")] = None,
     max_id: Annotated[Optional[int], Query(description="Maximum value for violation ID in the result set.")] = None,
 ) -> List[Violation]:
-    if not user.permission_obj.administrator and not user.permission_obj.view_users:
-        if creator_id is None:
-            creator_id = user.id
-        elif creator_id != user.id:
-            return []
-
-        if user_id is None:
-            user_id = user.id
-        elif user_id != user.id:
-            return []
+    if user.permission_obj.administrator or user.permission_obj.view_users:
+        related_to = None
+    else:
+        related_to = user.id
 
     return await Violation.query(
         violation_id=violation_id,
@@ -64,4 +58,5 @@ async def get_violations(
         user_id=user_id,
         min_id=min_id,
         max_id=max_id,
+        related_to=related_to,
     )

@@ -36,6 +36,7 @@ class Vehicle(BaseModel):
         user_id: Optional[int] = None,
         min_plate: Optional[str] = None,
         max_plate: Optional[str] = None,
+        related_to: Optional[int] = None,
     ) -> List[Vehicle]:
         async with Database.instance.pool.acquire() as connection:
             async with connection.cursor() as cursor:
@@ -57,6 +58,9 @@ class Vehicle(BaseModel):
                 ).add_condition(
                     "vehicle_plate <= ?",
                     max_plate,
+                ).add_condition(
+                    "user_id = ?",
+                    related_to,
                 )
 
                 await builder.execute(cursor.execute)

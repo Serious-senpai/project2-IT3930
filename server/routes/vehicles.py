@@ -31,11 +31,10 @@ async def get_vehicles(
     min_plate: Annotated[Optional[str], Query(description="Minimum value for vehicle plate in the result set (lexicography order).")] = None,
     max_plate: Annotated[Optional[str], Query(description="Maximum value for vehicle plate in the result set (lexicography order).")] = None,
 ) -> List[Vehicle]:
-    if not user.permission_obj.administrator and not user.permission_obj.view_users:
-        if user_id is None:
-            user_id = user.id
-        elif user_id != user.id:
-            return []
+    if user.permission_obj.administrator or user.permission_obj.view_users:
+        related_to = None
+    else:
+        related_to = user.id
 
     return await Vehicle.query(
         vehicle_plate=vehicle_plate,
@@ -43,4 +42,5 @@ async def get_vehicles(
         user_id=user_id,
         min_plate=min_plate,
         max_plate=max_plate,
+        related_to=related_to,
     )

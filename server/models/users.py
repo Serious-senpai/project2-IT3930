@@ -76,6 +76,7 @@ class User(Snowflake):
         user_phone: Optional[str] = None,
         min_id: Optional[int] = None,
         max_id: Optional[int] = None,
+        related_to: Optional[int] = None,
     ) -> List[User]:
         async with Database.instance.pool.acquire() as connection:
             async with connection.cursor() as cursor:
@@ -97,6 +98,9 @@ class User(Snowflake):
                 ).add_condition(
                     "user_id <= ?",
                     max_id,
+                ).add_condition(
+                    "user_id = ?",
+                    related_to,
                 )
 
                 await builder.execute(cursor.execute)

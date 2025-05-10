@@ -36,11 +36,10 @@ async def get_users(
     min_id: Annotated[Optional[int], Query(description="Minimum value for user ID in the result set.")] = None,
     max_id: Annotated[Optional[int], Query(description="Maximum value for user ID in the result set.")] = None,
 ) -> List[User]:
-    if not user.permission_obj.administrator and not user.permission_obj.view_users:
-        if user_id is None:
-            user_id = user.id
-        elif user_id != user.id:
-            return []
+    if user.permission_obj.administrator or user.permission_obj.view_users:
+        related_to = None
+    else:
+        related_to = user.id
 
     return await User.query(
         user_id=user_id,
@@ -48,6 +47,7 @@ async def get_users(
         user_phone=user_phone,
         min_id=min_id,
         max_id=max_id,
+        related_to=related_to,
     )
 
 

@@ -52,6 +52,7 @@ class Refutation(Snowflake):
         user_id: Optional[int] = None,
         min_id: Optional[int] = None,
         max_id: Optional[int] = None,
+        related_to: Optional[int] = None,
     ) -> List[Refutation]:
         async with Database.instance.pool.acquire() as connection:
             async with connection.cursor() as cursor:
@@ -85,6 +86,11 @@ class Refutation(Snowflake):
                 ).add_condition(
                     "refutation_id <= ?",
                     max_id,
+                ).add_condition(
+                    "author_id = ? OR creator_id = ? OR user_id = ?",
+                    related_to,
+                    related_to,
+                    related_to,
                 )
 
                 await builder.execute(cursor.execute)

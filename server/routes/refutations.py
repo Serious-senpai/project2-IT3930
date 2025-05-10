@@ -47,16 +47,10 @@ async def get_refutations(
     min_id: Annotated[Optional[int], Query(description="Minimum value for refutation ID in the result set.")] = None,
     max_id: Annotated[Optional[int], Query(description="Maximum value for refutation ID in the result set.")] = None,
 ) -> List[Refutation]:
-    if not user.permission_obj.administrator and not user.permission_obj.view_users:
-        if author_id is None:
-            author_id = user.id
-        elif author_id != user.id:
-            return []
-
-        if user_id is None:
-            user_id = user.id
-        elif user_id != user.id:
-            return []
+    if user.permission_obj.administrator or user.permission_obj.view_users:
+        related_to = None
+    else:
+        related_to = user.id
 
     return await Refutation.query(
         refutation_id=refutation_id,
@@ -68,4 +62,5 @@ async def get_refutations(
         user_id=user_id,
         min_id=min_id,
         max_id=max_id,
+        related_to=related_to,
     )
