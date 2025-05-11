@@ -94,6 +94,5 @@ BEGIN
         CONSTRAINT FK_Transactions_Violations FOREIGN KEY (violation_id) REFERENCES IT3930_Violations(id),
         CONSTRAINT FK_Transactions_Users FOREIGN KEY (user_id) REFERENCES IT3930_Users(id)
     )
-    CREATE NONCLUSTERED INDEX IDX_Transactions_violation_id ON IT3930_Transactions(violation_id)
     CREATE NONCLUSTERED INDEX IDX_Transactions_user_id ON IT3930_Transactions(user_id)
 END
