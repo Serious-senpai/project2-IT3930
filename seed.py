@@ -2,9 +2,14 @@ from __future__ import annotations
 
 import asyncio
 import itertools
+import random
+from typing import Dict, List
 
 from server.database import Database
 from server.utils import hash_password
+
+
+BATCH_SIZE = 32
 
 
 async def main() -> None:
@@ -12,37 +17,40 @@ async def main() -> None:
 
     async with Database.instance.pool.acquire() as conn:
         async with conn.cursor() as cursor:
-            await cursor.executemany(
-                "EXECUTE create_user @Fullname = ?, @Phone = ?, @HashedPassword = ?",
-                [(f"Nguyễn Văn A {i:04}", f"0{i:04}12345", hash_password(f"test{i:04}")) for i in range(100)],
-            )
-            await cursor.execute("SELECT id FROM IT3930_Users ORDER BY phone")
+            cursor._impl.fast_executemany = True
+
+            for indices in itertools.batched(range(10000), BATCH_SIZE):
+                await cursor.executemany(
+                    "EXECUTE create_user @Fullname = ?, @Phone = ?, @HashedPassword = ?",
+                    [(f"Nguyễn Văn A {i}", f"09{i:08}", hash_password(f"test{i:08}")) for i in indices],
+                )
+
+            await cursor.execute("SELECT id FROM IT3930_Users ORDER BY id")
             rows = await cursor.fetchall()
-            user_ids = [row.id for row in rows]
+            user_ids: List[int] = [row.id for row in rows]
 
-            await cursor.executemany(
-                "EXECUTE create_vehicle @Plate = ?, @UserId = ?",
-                [(f"29T1-{i:05}", user_ids[i % 80]) for i in range(200)]
-            )
+            owners = {f"29T1-{i:05}": random.choice(user_ids) for i in range(20000)}
+            for vh in itertools.batched(owners.items(), BATCH_SIZE):
+                await cursor.executemany("EXECUTE create_vehicle @Plate = ?, @UserId = ?", vh)
 
-            await cursor.executemany(
-                "EXECUTE create_violation @CreatorId = ?, @Category = ?, @Plate = ?, @FineVnd = ?, @VideoUrl = ?",
-                [(0, i % 3, f"29T1-{i:05}", (i + 1) * 1000, "https://files.catbox.moe/t32ctt.mp4") for i in range(100)]
-            )
+            for plates in itertools.batched(owners.keys(), BATCH_SIZE):
+                await cursor.executemany(
+                    "EXECUTE create_violation @CreatorId = ?, @Category = ?, @Plate = ?, @FineVnd = ?, @VideoUrl = ?",
+                    [(0, random.randint(0, 2), plate, random.randint(100, 6000) * 1000, "https://files.catbox.moe/t32ctt.mp4") for plate in plates],
+                )
 
-            await cursor.execute("SELECT id FROM IT3930_Violations ORDER BY fine_vnd")
+            await cursor.execute("SELECT id, plate FROM IT3930_Violations ORDER BY id")
             rows = await cursor.fetchall()
-            violation_ids = [row.id for row in rows]
+            violation_ids: Dict[int, str] = {row.id: row.plate for row in rows}
 
-            await cursor.executemany(
-                "EXECUTE create_refutation @ViolationId = ?, @UserId = ?, @Message = ?",
-                itertools.chain(*[itertools.repeat((violation_ids[i], user_ids[i % 80], f"Refute {i}"), 2 * i) for i in range(50)]),
-            )
+            for id, plate in violation_ids.items():
+                vl = [(id, owners[plate], f"Khiếu nại {i} cho xe {plate}") for i in range(random.randint(0, 4))]
+                if vl:
+                    await cursor.executemany("EXECUTE create_refutation @ViolationId = ?, @UserId = ?, @Message = ?", vl)
 
-            await cursor.executemany(
-                "EXECUTE create_transaction @ViolationId = ?, @UserId = ?",
-                [(violation_ids[i], user_ids[i % 80]) for i in range(100) if i % 2 == 0]
-            )
+            transaction_values = [(id, owners[plate]) for id, plate in violation_ids.items() if random.random() < 0.3]
+            for t in itertools.batched(transaction_values, BATCH_SIZE):
+                await cursor.executemany("EXECUTE create_transaction @ViolationId = ?, @UserId = ?", t)
 
     await Database.instance.close()
 

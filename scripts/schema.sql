@@ -46,13 +46,17 @@ BEGIN
 END
 
 IF NOT EXISTS (SELECT 1 FROM sys.objects WHERE name = 'IT3930_Vehicles' AND type = 'U')
+BEGIN
     CREATE TABLE IT3930_Vehicles (
         plate VARCHAR(12) PRIMARY KEY,
         user_id BIGINT NOT NULL,
         CONSTRAINT FK_Vehicles_Accounts FOREIGN KEY (user_id) REFERENCES IT3930_Users(id)
     )
+    CREATE NONCLUSTERED INDEX IDX_Vehicles_user_id ON IT3930_Vehicles(user_id)
+END
 
 IF NOT EXISTS (SELECT 1 FROM sys.objects WHERE name = 'IT3930_Violations' AND type = 'U')
+BEGIN
     CREATE TABLE IT3930_Violations (
         id BIGINT PRIMARY KEY,
         creator_id BIGINT NOT NULL,
@@ -63,8 +67,11 @@ IF NOT EXISTS (SELECT 1 FROM sys.objects WHERE name = 'IT3930_Violations' AND ty
         CONSTRAINT FK_Violations_Users FOREIGN KEY (creator_id) REFERENCES IT3930_Users(id),
         CONSTRAINT FK_Violations_Vehicles FOREIGN KEY (plate) REFERENCES IT3930_Vehicles(plate)
     )
+    CREATE NONCLUSTERED INDEX IDX_Violations_plate ON IT3930_Violations(plate)
+END
 
 IF NOT EXISTS (SELECT 1 FROM sys.objects WHERE name = 'IT3930_Refutations' AND type = 'U')
+BEGIN
     CREATE TABLE IT3930_Refutations (
         id BIGINT PRIMARY KEY,
         violation_id BIGINT NOT NULL,
@@ -74,8 +81,12 @@ IF NOT EXISTS (SELECT 1 FROM sys.objects WHERE name = 'IT3930_Refutations' AND t
         CONSTRAINT FK_Refutations_Violations FOREIGN KEY (violation_id) REFERENCES IT3930_Violations(id),
         CONSTRAINT FK_Refutations_Users FOREIGN KEY (user_id) REFERENCES IT3930_Users(id)
     )
+    CREATE NONCLUSTERED INDEX IDX_Refutations_violation_id ON IT3930_Refutations(violation_id)
+    CREATE NONCLUSTERED INDEX IDX_Refutations_user_id ON IT3930_Refutations(user_id)
+END
 
 IF NOT EXISTS (SELECT 1 FROM sys.objects WHERE name = 'IT3930_Transactions' AND type = 'U')
+BEGIN
     CREATE TABLE IT3930_Transactions (
         id BIGINT PRIMARY KEY,
         violation_id BIGINT UNIQUE NOT NULL,
@@ -83,3 +94,6 @@ IF NOT EXISTS (SELECT 1 FROM sys.objects WHERE name = 'IT3930_Transactions' AND 
         CONSTRAINT FK_Transactions_Violations FOREIGN KEY (violation_id) REFERENCES IT3930_Violations(id),
         CONSTRAINT FK_Transactions_Users FOREIGN KEY (user_id) REFERENCES IT3930_Users(id)
     )
+    CREATE NONCLUSTERED INDEX IDX_Transactions_violation_id ON IT3930_Transactions(violation_id)
+    CREATE NONCLUSTERED INDEX IDX_Transactions_user_id ON IT3930_Transactions(user_id)
+END
