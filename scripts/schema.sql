@@ -57,7 +57,7 @@ IF NOT EXISTS (SELECT 1 FROM sys.objects WHERE name = 'IT3930_Violations' AND ty
         id BIGINT PRIMARY KEY,
         creator_id BIGINT NOT NULL,
         category TINYINT NOT NULL CHECK (category IN (0, 1, 2)),
-        plate NVARCHAR(12) NOT NULL,
+        plate VARCHAR(12) NOT NULL,
         fine_vnd BIGINT NOT NULL,
         video_url NVARCHAR(2048) NOT NULL,
         CONSTRAINT FK_Violations_Users FOREIGN KEY (creator_id) REFERENCES IT3930_Users(id),
