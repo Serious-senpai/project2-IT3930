@@ -76,6 +76,7 @@ class Database:
             fd = os.open(str(lock_file), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
             os.close(fd)
         except FileExistsError:
+            print(f"Process {os.getpid()} will not initialize database (database.lock already exists).", file=sys.stderr)
             return
         finally:
             atexit.register(lock_file.unlink, missing_ok=True)

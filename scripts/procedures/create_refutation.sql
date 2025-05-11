@@ -1,7 +1,7 @@
 CREATE OR ALTER PROCEDURE create_refutation
     @ViolationId BIGINT,
     @UserId BIGINT,
-    @Message TEXT
+    @Message NVARCHAR(MAX)
 AS
 BEGIN
     SET NOCOUNT ON
