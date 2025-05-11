@@ -69,8 +69,10 @@ class User(Snowflake):
         except IndexError:
             raise error
 
-    @staticmethod
+    @classmethod
     async def query(
+        cls,
+        *,
         user_id: Optional[int] = None,
         user_fullname: Optional[str] = None,
         user_phone: Optional[str] = None,
@@ -106,7 +108,7 @@ class User(Snowflake):
                 await builder.execute(cursor.execute)
                 rows = await cursor.fetchall()
 
-        return [User.from_row(row) for row in rows]
+        return [cls.from_row(row) for row in rows]
 
     @staticmethod
     async def create(*, fullname: str, phone: str, password: str) -> int:
@@ -114,13 +116,13 @@ class User(Snowflake):
             async with connection.cursor() as cursor:
                 await cursor.execute(
                     "EXECUTE create_user @Fullname = ?, @Phone = ?, @HashedPassword = ?",
-                    fullname, phone, hash_password(password)
+                    fullname, phone, hash_password(password),
                 )
                 id = await cursor.fetchval()
                 return id
 
-    @classmethod
-    async def login(cls, *, phone: str, password: str) -> Optional[int]:
+    @staticmethod
+    async def login(*, phone: str, password: str) -> Optional[int]:
         async with Database.instance.pool.acquire() as connection:
             async with connection.cursor() as cursor:
                 await cursor.execute("SELECT id, hashed_password FROM IT3930_Users WHERE phone = ?", phone)

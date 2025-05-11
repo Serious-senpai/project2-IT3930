@@ -14,7 +14,7 @@ from ..models import User
 
 
 __all__ = ()
-router = APIRouter(prefix="/users")
+router = APIRouter(prefix="/users", tags=["users"])
 
 
 @router.get(
@@ -54,8 +54,8 @@ async def get_users(
 class __UserCreationPayload(BaseModel):
     """Payload for creating a new user"""
 
-    fullname: Annotated[str, Field(description="The user's full name")]
-    phone: Annotated[str, Field(description="The user's phone number")]
+    fullname: Annotated[str, Field(description="The user's full name", max_length=255)]
+    phone: Annotated[str, Field(description="The user's phone number", max_length=15)]
     password: Annotated[str, Field(description="The user's password")]
 
 

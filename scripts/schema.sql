@@ -47,7 +47,7 @@ END
 
 IF NOT EXISTS (SELECT 1 FROM sys.objects WHERE name = 'IT3930_Vehicles' AND type = 'U')
     CREATE TABLE IT3930_Vehicles (
-        plate NVARCHAR(12) PRIMARY KEY,
+        plate VARCHAR(12) PRIMARY KEY,
         user_id BIGINT NOT NULL,
         CONSTRAINT FK_Vehicles_Accounts FOREIGN KEY (user_id) REFERENCES IT3930_Users(id)
     )

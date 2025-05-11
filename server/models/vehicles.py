@@ -29,8 +29,10 @@ class Vehicle(BaseModel):
             user=User.from_row(row),
         )
 
-    @staticmethod
+    @classmethod
     async def query(
+        cls,
+        *,
         vehicle_plate: Optional[str] = None,
         vehicle_violations_count: Optional[int] = None,
         user_id: Optional[int] = None,
@@ -42,7 +44,7 @@ class Vehicle(BaseModel):
             async with connection.cursor() as cursor:
                 builder = SQLBuildHelper(
                     "SELECT * FROM view_vehicles",
-                    ("ORDER BY vehicle_plate DESC OFFSET 0 ROWS FETCH NEXT ? ROWS ONLY", (DB_PAGINATION_QUERY,)),
+                    ("ORDER BY vehicle_plate OFFSET 0 ROWS FETCH NEXT ? ROWS ONLY", (DB_PAGINATION_QUERY,)),
                 ).add_condition(
                     "vehicle_plate LIKE ?",
                     vehicle_plate,
@@ -66,4 +68,15 @@ class Vehicle(BaseModel):
                 await builder.execute(cursor.execute)
                 rows = await cursor.fetchall()
 
-        return [Vehicle.from_row(row) for row in rows]
+        return [cls.from_row(row) for row in rows]
+
+    @staticmethod
+    async def create(*, vehicle_plate: str, user_id: int) -> str:
+        async with Database.instance.pool.acquire() as connection:
+            async with connection.cursor() as cursor:
+                await cursor.execute(
+                    "EXECUTE create_vehicle @Plate = ?, @UserId = ?",
+                    vehicle_plate, user_id,
+                )
+                plate = await cursor.fetchval()
+                return plate

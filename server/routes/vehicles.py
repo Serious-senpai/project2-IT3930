@@ -2,14 +2,15 @@ from __future__ import annotations
 
 from typing import Annotated, List, Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pyodbc import IntegrityError  # type: ignore
 
 from ..config import DB_PAGINATION_QUERY
 from ..models import User, Vehicle
 
 
 __all__ = ()
-router = APIRouter(prefix="/vehicles")
+router = APIRouter(prefix="/vehicles", tags=["vehicles"])
 
 
 @router.get(
@@ -44,3 +45,35 @@ async def get_vehicles(
         max_plate=max_plate,
         related_to=related_to,
     )
+
+
+@router.post(
+    "/",
+    summary="Register a vehicle to the database",
+    responses={
+        403: {
+            "description": "Missing `CREATE_VEHICLE` permission",
+        },
+        409: {
+            "description": "Vehicle with this plate already exists.",
+        },
+    },
+)
+async def register_vehicle(
+    user: Annotated[User, Depends(User.oauth2_decode)],
+    vehicle_plate: Annotated[str, Query(description="The vehicle plate", max_length=12)],
+    user_id: Annotated[
+        Optional[int],
+        Query(
+            description="The user ID to register the vehicle to (you need `CREATE_VEHICLE` permission to register vehicles for other users)",
+        ),
+    ] = None,
+) -> str:
+    if not user.permission_obj.administrator and not user.permission_obj.create_vehicle:
+        if user_id is not None and user_id != user.id:
+            raise HTTPException(status_code=403, detail="Missing CREATE_VEHICLE permission")
+
+    try:
+        return await Vehicle.create(vehicle_plate=vehicle_plate, user_id=user.id)
+    except IntegrityError:
+        raise HTTPException(status_code=409, detail="Vehicle with this plate already exists.")

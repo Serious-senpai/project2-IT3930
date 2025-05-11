@@ -45,8 +45,10 @@ class Violation(Snowflake):
             vehicle=Vehicle.from_row(row),
         )
 
-    @staticmethod
+    @classmethod
     async def query(
+        cls,
+        *,
         violation_id: Optional[int] = None,
         creator_id: Optional[int] = None,
         violation_category: Optional[Literal[0, 1, 2]] = None,
@@ -103,4 +105,22 @@ class Violation(Snowflake):
                 await builder.execute(cursor.execute)
                 rows = await cursor.fetchall()
 
-        return [Violation.from_row(row) for row in rows]
+        return [cls.from_row(row) for row in rows]
+
+    @staticmethod
+    async def create(
+        *,
+        creator_id: int,
+        violation_category: Literal[0, 1, 2],
+        vehicle_plate: str,
+        violation_fine_vnd: int,
+        violation_video_url: str,
+    ) -> int:
+        async with Database.instance.pool.acquire() as connection:
+            async with connection.cursor() as cursor:
+                await cursor.execute(
+                    "EXECUTE create_violation @CreatorId = ?, @Category = ?, @Plate = ?, @FineVND = ?, @VideoUrl = ?",
+                    creator_id, violation_category, vehicle_plate, violation_fine_vnd, violation_video_url,
+                )
+                id = await cursor.fetchval()
+                return id

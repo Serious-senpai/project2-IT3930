@@ -41,8 +41,10 @@ class Refutation(Snowflake):
             violation=Violation.from_row(row),
         )
 
-    @staticmethod
+    @classmethod
     async def query(
+        cls,
+        *,
         refutation_id: Optional[int] = None,
         refutation_message: Optional[str] = None,
         refutation_response: Optional[str] = None,
@@ -96,4 +98,4 @@ class Refutation(Snowflake):
                 await builder.execute(cursor.execute)
                 rows = await cursor.fetchall()
 
-        return [Refutation.from_row(row) for row in rows]
+        return [cls.from_row(row) for row in rows]

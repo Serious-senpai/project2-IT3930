@@ -35,5 +35,13 @@ class Permission:
         return 1 << 1
 
     @flag_value
-    def create_violation(self) -> int:
+    def create_vehicle(self) -> int:
         return 1 << 2
+
+    @flag_value
+    def create_violation(self) -> int:
+        return 1 << 3
+
+    @flag_value
+    def create_refutation(self) -> int:
+        return 1 << 4

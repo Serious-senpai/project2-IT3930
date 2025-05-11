@@ -1,6 +1,6 @@
 CREATE OR ALTER PROCEDURE create_user
     @Fullname NVARCHAR(255),
-    @Phone NVARCHAR(15),
+    @Phone VARCHAR(15),
     @HashedPassword VARCHAR(136)
 AS
 BEGIN

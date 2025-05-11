@@ -9,7 +9,7 @@ from ..models import User, Violation
 
 
 __all__ = ()
-router = APIRouter(prefix="/violations")
+router = APIRouter(prefix="/violations", tags=["violations"])
 
 
 @router.get(

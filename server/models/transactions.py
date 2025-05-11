@@ -37,8 +37,10 @@ class Transaction(Snowflake):
             ),
         )
 
-    @staticmethod
+    @classmethod
     async def query(
+        cls,
+        *,
         transaction_id: Optional[int] = None,
         violation_id: Optional[int] = None,
         vehicle_plate: Optional[str] = None,
@@ -84,4 +86,4 @@ class Transaction(Snowflake):
                 await builder.execute(cursor.execute)
                 rows = await cursor.fetchall()
 
-        return [Transaction.from_row(row) for row in rows]
+        return [cls.from_row(row) for row in rows]

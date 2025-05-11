@@ -1,7 +1,7 @@
 CREATE OR ALTER PROCEDURE create_violation
     @CreatorId BIGINT,
     @Category TINYINT,
-    @Plate NVARCHAR(12),
+    @Plate VARCHAR(12),
     @FineVnd BIGINT,
     @VideoUrl NVARCHAR(2048)
 AS
