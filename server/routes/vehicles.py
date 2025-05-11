@@ -49,7 +49,8 @@ async def get_vehicles(
 
 @router.post(
     "/",
-    summary="Register a vehicle to the database",
+    summary="Register a new vehicle",
+    description="Register a new vehicle in the database. Return the vehicle plate.",
     responses={
         403: {
             "description": "Missing `CREATE_VEHICLE` permission",

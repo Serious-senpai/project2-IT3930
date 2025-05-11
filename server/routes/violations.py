@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from typing import Annotated, List, Literal, Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BeforeValidator
+from pyodbc import IntegrityError  # type: ignore
 
 from ..config import DB_PAGINATION_QUERY
 from ..models import User, Violation
@@ -21,7 +23,8 @@ async def get_violations(
     user: Annotated[User, Depends(User.oauth2_decode)],
     violation_id: Annotated[Optional[int], Query(description="Filter by violation ID")] = None,
     creator_id: Annotated[Optional[int], Query(description="Filter by creator ID")] = None,
-    violation_category: Annotated[Optional[Literal[0, 1, 2]], Query(description="Filter by violation category")] = None,
+    # BeforeValidator(int): https://github.com/fastapi/fastapi/discussions/8966
+    violation_category: Annotated[Optional[Literal[0, 1, 2]], Query(description="Filter by violation category"), BeforeValidator(int)] = None,
     violation_fine_vnd: Annotated[Optional[int], Query(description="Filter by the fine amount in VND")] = None,
     violation_video_url: Annotated[
         Optional[str],
@@ -60,3 +63,38 @@ async def get_violations(
         max_id=max_id,
         related_to=related_to,
     )
+
+
+@router.post(
+    "/",
+    summary="Add a new violation",
+    description="Add a new violation to the database. Return the violation ID.",
+    responses={
+        403: {
+            "description": "Missing `CREATE_VIOLATION` permission",
+        },
+        409: {
+            "description": "Vehicle with this plate does not exist.",
+        },
+    },
+)
+async def add_violation(
+    user: Annotated[User, Depends(User.oauth2_decode)],
+    violation_category: Annotated[Literal[0, 1, 2], Query(description="The violation category"), BeforeValidator(int)],
+    vehicle_plate: Annotated[str, Query(description="The vehicle plate", max_length=12)],
+    violation_fine_vnd: Annotated[int, Query(description="The fine amount in VND")],
+    violation_video_url: Annotated[str, Query(description="The URL to the video", max_length=2048)],
+) -> int:
+    if not user.permission_obj.administrator and not user.permission_obj.create_violation:
+        raise HTTPException(status_code=403, detail="Missing CREATE_VIOLATION permission")
+
+    try:
+        return await Violation.create(
+            creator_id=user.id,
+            violation_category=violation_category,
+            vehicle_plate=vehicle_plate,
+            violation_fine_vnd=violation_fine_vnd,
+            violation_video_url=violation_video_url,
+        )
+    except IntegrityError:
+        raise HTTPException(status_code=409, detail="Vehicle with this plate does not exist.")

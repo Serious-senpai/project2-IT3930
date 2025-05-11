@@ -62,7 +62,7 @@ class __UserCreationPayload(BaseModel):
 @router.post(
     "/",
     summary="Create a new user",
-    description="Create a new user in the database. Returns the ID of the new user.",
+    description="Create a new user in the database. Return the ID of the new user.",
     responses={
         409: {
             "description": "User with this phone number already exists.",
