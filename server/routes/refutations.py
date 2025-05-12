@@ -83,7 +83,7 @@ class __RefutationCreationPayload(BaseModel):
 @router.post(
     "/",
     summary="Create a new refutation",
-    description="Create a new refutation in the database. Return the violation ID.",
+    description="Create a new refutation in the database. Return the refutation ID.",
     responses={
         403: {
             "description": "Missing `CREATE_REFUTATION` permission",
