@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import cached_property
 from typing import Annotated, List, Optional
 
 import jwt
@@ -30,7 +31,7 @@ class User(Snowflake):
     vehicles_count: Annotated[int, Field(description="The number of vehicles the user has")]
     violations_count: Annotated[int, Field(description="The number of violations the user has")]
 
-    @property
+    @cached_property
     def permission_obj(self) -> Permission:
         return Permission(self.permissions)
 

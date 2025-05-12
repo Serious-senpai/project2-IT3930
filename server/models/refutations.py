@@ -115,3 +115,19 @@ class Refutation(Snowflake):
                 )
                 id = await cursor.fetchval()
                 return id
+
+    @staticmethod
+    async def respond(
+        *,
+        refutation_id: int,
+        response: str,
+    ) -> Optional[int]:
+        async with Database.instance.pool.acquire() as connection:
+            async with connection.cursor() as cursor:
+                await cursor.execute(
+                    "EXECUTE respond_refutation @Id = ?, @Response = ?",
+                    refutation_id, response,
+                )
+
+                id = await cursor.fetchval()
+                return id

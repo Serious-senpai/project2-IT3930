@@ -45,3 +45,7 @@ class Permission:
     @flag_value
     def create_refutation(self) -> int:
         return 1 << 4
+
+    @flag_value
+    def respond_refutation(self) -> int:
+        return 1 << 5

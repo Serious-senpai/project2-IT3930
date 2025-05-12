@@ -93,7 +93,7 @@ class __RefutationCreationPayload(BaseModel):
         },
     },
 )
-async def add_violation(
+async def create_refutation(
     user: Annotated[User, Depends(User.oauth2_decode)],
     payload: __RefutationCreationPayload,
 ) -> int:
@@ -116,3 +116,39 @@ async def add_violation(
         )
     except IntegrityError:
         raise conflict
+
+
+class __RefutationResponsePayload(BaseModel):
+    """Payload for responding to a refutation."""
+
+    refutation_id: Annotated[int, Field(description="The refutation ID to respond to.")]
+    response: Annotated[str, Field(description="The response message.", max_length=4096)]
+
+
+@router.post(
+    "/response",
+    summary="Respond to a refutation",
+    description="Respond to a refutation in the database.",
+    status_code=204,
+    response_model=None,
+    responses={
+        403: {
+            "description": "Missing `RESPOND_REFUTATION` permission",
+        },
+        409: {
+            "description": "The provided refutation ID does not exist.",
+        },
+    },
+)
+async def refutation_response(
+    user: Annotated[User, Depends(User.oauth2_decode)],
+    payload: __RefutationResponsePayload,
+) -> None:
+    if not user.permission_obj.administrator and not user.permission_obj.respond_refutation:
+        raise HTTPException(status_code=403, detail="Missing `RESPOND_REFUTATION` permission")
+
+    id = await Refutation.respond(refutation_id=payload.refutation_id, response=payload.response)
+    if id is None:
+        raise HTTPException(status_code=409, detail="The provided refutation ID does not exist.")
+
+    return None

@@ -4,4 +4,5 @@ CREATE OR ALTER PROCEDURE respond_refutation
 AS
     UPDATE IT3930_Refutations
     SET response = @Response
+    OUTPUT INSERTED.id
     WHERE id = @Id
