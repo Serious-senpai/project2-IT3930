@@ -27,5 +27,11 @@ class Snowflake(BaseModel):
 
         return NotImplemented
 
+    def __ne__(self, other: Any) -> bool:
+        if isinstance(other, Snowflake):
+            return self.id != other.id
+
+        return NotImplemented
+
     def __hash__(self) -> int:
         return hash(self.id)

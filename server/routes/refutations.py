@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from typing import Annotated, List, Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
+from pyodbc import IntegrityError  # type: ignore
 
 from ..config import DB_PAGINATION_QUERY
-from ..models import Refutation, User
+from ..models import Refutation, User, Violation
 
 
 __all__ = ()
@@ -64,3 +66,53 @@ async def get_refutations(
         max_id=max_id,
         related_to=related_to,
     )
+
+
+class __RefutationCreationPayload(BaseModel):
+    """Payload for creating a new refutation."""
+
+    violation_id: Annotated[
+        int,
+        Field(
+            description="The violation ID to refute (you need `CREATE_REFUTATION` permission to refute someone else's violation).",
+        ),
+    ]
+    message: Annotated[str, Field(description="The refutation message.", max_length=4096)]
+
+
+@router.post(
+    "/",
+    summary="Create a new refutation",
+    description="Create a new refutation in the database. Return the violation ID.",
+    responses={
+        403: {
+            "description": "Missing `CREATE_REFUTATION` permission",
+        },
+        409: {
+            "description": "The provided violation ID does not exist.",
+        },
+    },
+)
+async def add_violation(
+    user: Annotated[User, Depends(User.oauth2_decode)],
+    payload: __RefutationCreationPayload,
+) -> int:
+    conflict = HTTPException(status_code=409, detail="The provided violation ID does not exist.")
+    if not user.permission_obj.administrator and not user.permission_obj.create_refutation:
+        # Check that `user` is the same as `violation.vehicle.user`
+        violations = await Violation.query(violation_id=payload.violation_id)
+        if len(violations) != 1:
+            raise conflict
+
+        violation = violations[0]
+        if violation.vehicle.user != user:
+            raise HTTPException(status_code=403, detail="Missing `CREATE_REFUTATION` permission")
+
+    try:
+        return await Refutation.create(
+            violation_id=payload.violation_id,
+            user_id=user.id,
+            message=payload.message,
+        )
+    except IntegrityError:
+        raise conflict

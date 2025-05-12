@@ -99,3 +99,19 @@ class Refutation(Snowflake):
                 rows = await cursor.fetchall()
 
         return [cls.from_row(row) for row in rows]
+
+    @staticmethod
+    async def create(
+        *,
+        violation_id: int,
+        user_id: int,
+        message: str,
+    ) -> int:
+        async with Database.instance.pool.acquire() as connection:
+            async with connection.cursor() as cursor:
+                await cursor.execute(
+                    "EXECUTE create_refutation @ViolationId = ?, @UserId = ?, @Message = ?",
+                    violation_id, user_id, message,
+                )
+                id = await cursor.fetchval()
+                return id
