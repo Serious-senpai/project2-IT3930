@@ -50,7 +50,9 @@ async def get_vehicles(
 @router.post(
     "/",
     summary="Register a new vehicle",
-    description="Register a new vehicle in the database. Return the vehicle plate.",
+    description="Register a new vehicle in the database.",
+    status_code=204,
+    response_model=None,
     responses={
         403: {
             "description": "Missing `CREATE_VEHICLE` permission",
@@ -69,12 +71,15 @@ async def register_vehicle(
             description="The user ID to register the vehicle to (you need `CREATE_VEHICLE` permission to register vehicles for other users)",
         ),
     ] = None,
-) -> str:
+) -> None:
+    if user_id is None:
+        user_id = user.id
+
     if not user.permission_obj.administrator and not user.permission_obj.create_vehicle:
-        if user_id is not None and user_id != user.id:
+        if user_id != user.id:
             raise HTTPException(status_code=403, detail="Missing CREATE_VEHICLE permission")
 
     try:
-        return await Vehicle.create(vehicle_plate=vehicle_plate, user_id=user.id)
+        await Vehicle.create(vehicle_plate=vehicle_plate, user_id=user_id)
     except IntegrityError:
         raise HTTPException(status_code=409, detail="Vehicle with this plate already exists.")

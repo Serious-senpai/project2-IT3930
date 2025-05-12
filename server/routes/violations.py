@@ -68,7 +68,7 @@ async def get_violations(
 @router.post(
     "/",
     summary="Add a new violation",
-    description="Add a new violation to the database. Return the violation ID.",
+    description="Add a new violation to the database. Return the ID of the new violation.",
     responses={
         403: {
             "description": "Missing `CREATE_VIOLATION` permission",

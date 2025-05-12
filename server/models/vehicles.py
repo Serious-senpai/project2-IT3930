@@ -71,12 +71,10 @@ class Vehicle(BaseModel):
         return [cls.from_row(row) for row in rows]
 
     @staticmethod
-    async def create(*, vehicle_plate: str, user_id: int) -> str:
+    async def create(*, vehicle_plate: str, user_id: int) -> None:
         async with Database.instance.pool.acquire() as connection:
             async with connection.cursor() as cursor:
                 await cursor.execute(
                     "EXECUTE create_vehicle @Plate = ?, @UserId = ?",
                     vehicle_plate, user_id,
                 )
-                plate = await cursor.fetchval()
-                return plate
