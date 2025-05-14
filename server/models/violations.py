@@ -46,6 +46,7 @@ class Violation(Snowflake):
         )
 
     @classmethod
+    @Database.retry()
     async def query(
         cls,
         *,
@@ -61,7 +62,8 @@ class Violation(Snowflake):
         max_id: Optional[int] = None,
         related_to: Optional[int] = None,
     ) -> List[Violation]:
-        async with Database.instance.pool.acquire() as connection:
+        pool = await Database.instance.pool()
+        async with pool.acquire() as connection:
             async with connection.cursor() as cursor:
                 builder = SQLBuildHelper(
                     "SELECT * FROM view_violations",
@@ -108,6 +110,7 @@ class Violation(Snowflake):
         return [cls.from_row(row) for row in rows]
 
     @staticmethod
+    @Database.retry()
     async def create(
         *,
         creator_id: int,
@@ -116,7 +119,8 @@ class Violation(Snowflake):
         violation_fine_vnd: int,
         violation_video_url: str,
     ) -> int:
-        async with Database.instance.pool.acquire() as connection:
+        pool = await Database.instance.pool()
+        async with pool.acquire() as connection:
             async with connection.cursor() as cursor:
                 await cursor.execute(
                     "EXECUTE create_violation @CreatorId = ?, @Category = ?, @Plate = ?, @FineVND = ?, @VideoUrl = ?",

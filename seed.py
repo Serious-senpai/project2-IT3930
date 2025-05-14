@@ -13,10 +13,9 @@ BATCH_SIZE = 32
 
 
 async def main() -> None:
-    await Database.instance.prepare()
-
-    async with Database.instance.pool.acquire() as conn:
-        async with conn.cursor() as cursor:
+    pool = await Database.instance.pool()
+    async with pool.acquire() as connection:
+        async with connection.cursor() as cursor:
             cursor._impl.fast_executemany = True
 
             for indices in itertools.batched(range(10000), BATCH_SIZE):

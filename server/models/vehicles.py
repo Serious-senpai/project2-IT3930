@@ -30,6 +30,7 @@ class Vehicle(BaseModel):
         )
 
     @classmethod
+    @Database.retry()
     async def query(
         cls,
         *,
@@ -40,7 +41,8 @@ class Vehicle(BaseModel):
         max_plate: Optional[str] = None,
         related_to: Optional[int] = None,
     ) -> List[Vehicle]:
-        async with Database.instance.pool.acquire() as connection:
+        pool = await Database.instance.pool()
+        async with pool.acquire() as connection:
             async with connection.cursor() as cursor:
                 builder = SQLBuildHelper(
                     "SELECT * FROM view_vehicles",
@@ -71,8 +73,10 @@ class Vehicle(BaseModel):
         return [cls.from_row(row) for row in rows]
 
     @staticmethod
+    @Database.retry()
     async def create(*, vehicle_plate: str, user_id: int) -> None:
-        async with Database.instance.pool.acquire() as connection:
+        pool = await Database.instance.pool()
+        async with pool.acquire() as connection:
             async with connection.cursor() as cursor:
                 await cursor.execute(
                     "EXECUTE create_vehicle @Plate = ?, @UserId = ?",

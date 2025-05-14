@@ -38,6 +38,7 @@ class Transaction(Snowflake):
         )
 
     @classmethod
+    @Database.retry()
     async def query(
         cls,
         *,
@@ -50,7 +51,8 @@ class Transaction(Snowflake):
         max_id: Optional[int] = None,
         related_to: Optional[int] = None,
     ) -> List[Transaction]:
-        async with Database.instance.pool.acquire() as connection:
+        pool = await Database.instance.pool()
+        async with pool.acquire() as connection:
             async with connection.cursor() as cursor:
                 builder = SQLBuildHelper(
                     "SELECT * FROM view_transactions",

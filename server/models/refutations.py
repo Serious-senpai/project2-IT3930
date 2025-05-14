@@ -42,6 +42,7 @@ class Refutation(Snowflake):
         )
 
     @classmethod
+    @Database.retry()
     async def query(
         cls,
         *,
@@ -56,7 +57,8 @@ class Refutation(Snowflake):
         max_id: Optional[int] = None,
         related_to: Optional[int] = None,
     ) -> List[Refutation]:
-        async with Database.instance.pool.acquire() as connection:
+        pool = await Database.instance.pool()
+        async with pool.acquire() as connection:
             async with connection.cursor() as cursor:
                 builder = SQLBuildHelper(
                     "SELECT * FROM view_refutations",
@@ -101,13 +103,15 @@ class Refutation(Snowflake):
         return [cls.from_row(row) for row in rows]
 
     @staticmethod
+    @Database.retry()
     async def create(
         *,
         violation_id: int,
         user_id: int,
         message: str,
     ) -> int:
-        async with Database.instance.pool.acquire() as connection:
+        pool = await Database.instance.pool()
+        async with pool.acquire() as connection:
             async with connection.cursor() as cursor:
                 await cursor.execute(
                     "EXECUTE create_refutation @ViolationId = ?, @UserId = ?, @Message = ?",
@@ -117,12 +121,14 @@ class Refutation(Snowflake):
                 return id
 
     @staticmethod
+    @Database.retry()
     async def respond(
         *,
         refutation_id: int,
         response: str,
     ) -> Optional[int]:
-        async with Database.instance.pool.acquire() as connection:
+        pool = await Database.instance.pool()
+        async with pool.acquire() as connection:
             async with connection.cursor() as cursor:
                 await cursor.execute(
                     "EXECUTE respond_refutation @Id = ?, @Response = ?",

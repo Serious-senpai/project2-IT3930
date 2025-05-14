@@ -71,6 +71,7 @@ class User(Snowflake):
             raise error
 
     @classmethod
+    @Database.retry()
     async def query(
         cls,
         *,
@@ -81,7 +82,8 @@ class User(Snowflake):
         max_id: Optional[int] = None,
         related_to: Optional[int] = None,
     ) -> List[User]:
-        async with Database.instance.pool.acquire() as connection:
+        pool = await Database.instance.pool()
+        async with pool.acquire() as connection:
             async with connection.cursor() as cursor:
                 builder = SQLBuildHelper(
                     "SELECT * FROM view_users",
@@ -112,8 +114,10 @@ class User(Snowflake):
         return [cls.from_row(row) for row in rows]
 
     @staticmethod
+    @Database.retry()
     async def create(*, fullname: str, phone: str, password: str) -> int:
-        async with Database.instance.pool.acquire() as connection:
+        pool = await Database.instance.pool()
+        async with pool.acquire() as connection:
             async with connection.cursor() as cursor:
                 await cursor.execute(
                     "EXECUTE create_user @Fullname = ?, @Phone = ?, @HashedPassword = ?",
@@ -123,8 +127,10 @@ class User(Snowflake):
                 return id
 
     @staticmethod
+    @Database.retry()
     async def login(*, phone: str, password: str) -> Optional[int]:
-        async with Database.instance.pool.acquire() as connection:
+        pool = await Database.instance.pool()
+        async with pool.acquire() as connection:
             async with connection.cursor() as cursor:
                 await cursor.execute("SELECT id, hashed_password FROM IT3930_Users WHERE phone = ?", phone)
                 row = await cursor.fetchone()
@@ -137,8 +143,10 @@ class User(Snowflake):
         return None
 
     @staticmethod
+    @Database.retry()
     async def secret_key() -> str:
-        async with Database.instance.pool.acquire() as connection:
+        pool = await Database.instance.pool()
+        async with pool.acquire() as connection:
             async with connection.cursor() as cursor:
                 await cursor.execute("SELECT value FROM IT3930_Config WHERE name = ?", "session_secret_key")
                 return await cursor.fetchval()
