@@ -75,8 +75,8 @@ class Database:
                 f"Database={MSSQL_DATABASE};Uid={MSSQL_USER};Pwd={MSSQL_PASSWORD};"
                 "Encrypt=yes;TrustServerCertificate=yes;Connection Timeout=30;"
             ),
-            minsize=10,
-            maxsize=100,
+            minsize=1,
+            maxsize=10,
             autocommit=True,
         )
 
