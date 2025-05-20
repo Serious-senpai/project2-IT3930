@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Annotated, List, Literal, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import BeforeValidator
 from pyodbc import IntegrityError  # type: ignore
 
@@ -98,3 +98,23 @@ async def add_violation(
         )
     except IntegrityError:
         raise HTTPException(status_code=409, detail="Vehicle with this plate does not exist.")
+
+
+@router.get(
+    "/{plate}",
+    summary="Query violations by vehicle plate",
+    description=(
+        f"Query a maximum of {DB_PAGINATION_QUERY} violations from the database. The result is sorted by violation ID in descending order.\n\n"
+        "This endpoint does not require authorization."
+    ),
+)
+async def get_violations_by_plate(
+    plate: Annotated[
+        str,
+        Path(
+            description="Filter by vehicle plate [pattern]"
+            "(https://learn.microsoft.com/en-us/sql/t-sql/language-elements/like-transact-sql?view=sql-server-ver16#pattern).",
+        ),
+    ],
+) -> List[Violation]:
+    return await Violation.query(vehicle_plate=plate)
