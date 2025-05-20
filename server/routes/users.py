@@ -102,7 +102,7 @@ async def login_user(form: Annotated[OAuth2PasswordRequestForm, Depends()]) -> _
 
     data = {
         "id": id,
-        "exp": datetime.now(tz=timezone.utc) + timedelta(minutes=15),
+        "exp": datetime.now(tz=timezone.utc) + timedelta(days=1),
     }
 
     return __LoginResponse(
