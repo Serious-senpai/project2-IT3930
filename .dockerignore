@@ -2,4 +2,5 @@
 **/Dockerfile
 **/compose.yml
 
-README.md
+database.lock
+run.bat

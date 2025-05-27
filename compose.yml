@@ -1,0 +1,70 @@
+# Reference: https://docs.docker.com/reference/compose-file/
+name: project2
+
+services:
+  database:
+    container_name: mssql-server
+    environment:
+      ACCEPT_EULA: Y
+      MSSQL_SA_PASSWORD: Project2@123
+      MSSQL_PID: Developer
+      MSSQL_MEMORY_LIMIT_MB: 2048
+      MSSQL_TCP_PORT: 1433
+    image: mcr.microsoft.com/mssql/server:2022-CU18-ubuntu-22.04
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Project2@123" -C -Q "CREATE DATABASE test"
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+    hostname: database
+
+  api-server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    container_name: fastapi
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      PORT: 8000
+      MSSQL_HOST: database
+      MSSQL_DATABASE: test
+      MSSQL_USER: sa
+      MSSQL_PASSWORD: Project2@123
+    healthcheck:
+      test: curl http://localhost:8000/docs
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 1s
+    hostname: api-server
+    ports:
+      - 8000:8000
+
+  manager-frontend:
+    build:
+      args: 
+        VITE_API_URL: http://localhost:8000
+      context: .
+      dockerfile: frontend/manager.Dockerfile
+    container_name: manager-frontend
+    depends_on:
+      api-server:
+        condition: service_healthy
+    ports:
+      - 3002:80
+
+  user-frontend:
+    build:
+      args: 
+        VITE_API_URL: http://localhost:8000
+      context: .
+      dockerfile: frontend/manager.Dockerfile
+    container_name: user-frontend
+    depends_on:
+      api-server:
+        condition: service_healthy
+    ports:
+      - 3003:80

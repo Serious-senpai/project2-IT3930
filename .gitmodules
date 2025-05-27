@@ -1,0 +1,3 @@
+[submodule "frontend/hethongphatnguoi"]
+	path = frontend/hethongphatnguoi
+	url = https://github.com/Huyvodoi38/hethongphatnguoi
