@@ -18,7 +18,7 @@ async def main() -> None:
         async with connection.cursor() as cursor:
             cursor._impl.fast_executemany = True
 
-            for indices in itertools.batched(range(10000), BATCH_SIZE):
+            for indices in itertools.batched(range(1000), BATCH_SIZE):
                 await cursor.executemany(
                     "EXECUTE create_user @Fullname = ?, @Phone = ?, @HashedPassword = ?",
                     [(f"Nguyễn Văn A {i}", f"09{i:08}", hash_password(f"test{i:08}")) for i in indices],
@@ -28,7 +28,7 @@ async def main() -> None:
             rows = await cursor.fetchall()
             user_ids: List[int] = [row.id for row in rows]
 
-            owners = {f"29T1-{i:05}": random.choice(user_ids) for i in range(20000)}
+            owners = {f"29T1-{i:05}": random.choice(user_ids) for i in range(2000)}
             for vh in itertools.batched(owners.items(), BATCH_SIZE):
                 await cursor.executemany("EXECUTE create_vehicle @Plate = ?, @UserId = ?", vh)
 

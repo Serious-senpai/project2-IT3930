@@ -80,47 +80,49 @@ class Database:
             autocommit=True,
         )
 
+        self.__prepared.set()
+
         try:
             fd = os.open(str(self.LOCK_FILE), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
             os.close(fd)
         except FileExistsError:
             print(f"Process {os.getpid()} will not initialize database (database.lock already exists).", file=sys.stderr)
             return
+
+        else:
+            print(f"Process {os.getpid()} is initializing database...", file=sys.stderr)
+
+            async with pool.acquire() as connection:
+                async with connection.cursor() as cursor:
+                    async def execute(file: Path, *args: Any) -> None:
+                        try:
+                            with file.open("r", encoding="utf-8") as sql:
+                                await cursor.execute(sql.read(), *args)
+
+                        except Exception as e:
+                            raise RuntimeError(f"Failed to execute {file}") from e
+
+                    scripts_dir = ROOT / "scripts"
+                    await execute(
+                        scripts_dir / "schema.sql",
+                        secrets.token_hex(32),
+                        EPOCH,
+                    )
+
+                    await execute(scripts_dir / "procedures" / "generate_id.sql")
+                    for file in scripts_dir.glob("procedures/*.sql"):
+                        if file.stem != "generate_id":
+                            await execute(file)
+
+                    await execute(scripts_dir / "views" / "view_users.sql")
+                    await execute(scripts_dir / "views" / "view_vehicles.sql")
+                    await execute(scripts_dir / "views" / "view_violations.sql")
+                    await execute(scripts_dir / "views" / "view_refutations.sql")
+                    await execute(scripts_dir / "views" / "view_transactions.sql")
+
         finally:
             atexit.register(self.LOCK_FILE.unlink, missing_ok=True)
-
-        print(f"Process {os.getpid()} is initializing database...", file=sys.stderr)
-
-        async with pool.acquire() as connection:
-            async with connection.cursor() as cursor:
-                async def execute(file: Path, *args: Any) -> None:
-                    try:
-                        with file.open("r", encoding="utf-8") as sql:
-                            await cursor.execute(sql.read(), *args)
-
-                    except Exception as e:
-                        raise RuntimeError(f"Failed to execute {file}") from e
-
-                scripts_dir = ROOT / "scripts"
-                await execute(
-                    scripts_dir / "schema.sql",
-                    secrets.token_hex(32),
-                    EPOCH,
-                )
-
-                await execute(scripts_dir / "procedures" / "generate_id.sql")
-                for file in scripts_dir.glob("procedures/*.sql"):
-                    if file.stem != "generate_id":
-                        await execute(file)
-
-                await execute(scripts_dir / "views" / "view_users.sql")
-                await execute(scripts_dir / "views" / "view_vehicles.sql")
-                await execute(scripts_dir / "views" / "view_violations.sql")
-                await execute(scripts_dir / "views" / "view_refutations.sql")
-                await execute(scripts_dir / "views" / "view_transactions.sql")
-
-        self.__prepared.set()
-        self.__preparing = False
+            self.__preparing = False
 
     async def close(self) -> None:
         if self.__closing:
