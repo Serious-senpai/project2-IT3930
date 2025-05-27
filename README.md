@@ -1,4 +1,3 @@
-[![Azure deployment](https://github.com/Serious-senpai/project2-IT3930/actions/workflows/deploy.yml/badge.svg)](https://github.com/Serious-senpai/project2-IT3930/actions/workflows/deploy.yml)
 [![Lint](https://github.com/Serious-senpai/project2-IT3930/actions/workflows/lint.yml/badge.svg)](https://github.com/Serious-senpai/project2-IT3930/actions/workflows/lint.yml)
 
 ## API documentation
