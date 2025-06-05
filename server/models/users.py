@@ -23,7 +23,7 @@ OAUTH2_SCHEME = OAuth2PasswordBearer("/users/login")
 
 
 class User(Snowflake):
-    """Represents a user"""
+    """Represents a user."""
 
     fullname: Annotated[str, Field(description="The user's full name")]
     phone: Annotated[str, Field(description="The user's phone number")]

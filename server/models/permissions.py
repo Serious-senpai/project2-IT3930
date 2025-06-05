@@ -49,3 +49,7 @@ class Permission:
     @flag_value
     def respond_refutation(self) -> int:
         return 1 << 5
+
+    @flag_value
+    def manage_detected(self) -> int:
+        return 1 << 6

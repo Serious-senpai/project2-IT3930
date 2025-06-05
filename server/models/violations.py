@@ -17,7 +17,7 @@ __all__ = ("Violation",)
 
 
 class Violation(Snowflake):
-    """Represents a vehicle."""
+    """Represents a violation."""
 
     creator: Annotated[User, Field(description="The user who submitted this violation (this is not the violator)")]
     category: Annotated[Literal[0, 1, 2], Field(description="The violation category: 0 - speeding, 1 - red light, 2 - pavement")]

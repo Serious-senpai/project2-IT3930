@@ -14,3 +14,4 @@ Permissions are a way to limit and grant certain abilities to users. For long-te
 | **CREATE_VIOLATION** | `0x8 (1 << 3)` | Allow creating new violations |
 | **CREATE_REFUTATION** | `0x10 (1 << 4)` | Allow creating new refutations of violations for other users (without this permission, users can only create a refutation for themselves) |
 | **RESPOND_REFUTATION** | `0x20 (1 << 5)` | Allow responding to refutations |
+| **MANAGE_DETECTED** | `0x40 (1 << 6)` | Allow viewing and deleting violations detected by cameras |

@@ -116,6 +116,7 @@ class Database:
 
                     await execute(scripts_dir / "views" / "view_users.sql")
                     await execute(scripts_dir / "views" / "view_vehicles.sql")
+                    await execute(scripts_dir / "views" / "view_detected.sql")
                     await execute(scripts_dir / "views" / "view_violations.sql")
                     await execute(scripts_dir / "views" / "view_refutations.sql")
                     await execute(scripts_dir / "views" / "view_transactions.sql")

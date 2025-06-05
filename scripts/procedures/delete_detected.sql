@@ -1,0 +1,10 @@
+CREATE OR ALTER PROCEDURE delete_detected
+    @Id BIGINT
+AS
+BEGIN
+    SET NOCOUNT ON
+
+    DELETE FROM IT3930_Detected
+    OUTPUT DELETED.id
+    WHERE id = @Id
+END

@@ -70,6 +70,18 @@ BEGIN
     CREATE NONCLUSTERED INDEX IDX_Violations_plate ON IT3930_Violations(plate)
 END
 
+IF NOT EXISTS (SELECT 1 FROM sys.objects WHERE name = 'IT3930_Detected' AND type = 'U')
+BEGIN
+    CREATE TABLE IT3930_Detected (
+        id BIGINT PRIMARY KEY,
+        category TINYINT NOT NULL CHECK (category IN (0, 1, 2)),
+        plate VARCHAR(12) NOT NULL,
+        video_url NVARCHAR(2048) NOT NULL,
+        CONSTRAINT FK_Detected_Vehicles FOREIGN KEY (plate) REFERENCES IT3930_Vehicles(plate)
+    )
+    CREATE NONCLUSTERED INDEX IDX_Detected_plate ON IT3930_Detected(plate)
+END
+
 IF NOT EXISTS (SELECT 1 FROM sys.objects WHERE name = 'IT3930_Refutations' AND type = 'U')
 BEGIN
     CREATE TABLE IT3930_Refutations (
