@@ -16,7 +16,7 @@ class Snowflake(BaseModel):
 
     id: Annotated[int, Field(description="The snowflake ID")]
 
-    @computed_field
+    @computed_field  # type: ignore[misc]
     @property
     def created_at(self) -> datetime:
         """The time at which this snowflake was created"""

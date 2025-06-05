@@ -6,7 +6,6 @@ from pydantic import Field
 from pyodbc import Row  # type: ignore
 
 from .snowflake import Snowflake
-from .users import User
 from .vehicles import Vehicle
 from ..config import DB_PAGINATION_QUERY
 from ..database import Database
