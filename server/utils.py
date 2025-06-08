@@ -100,3 +100,10 @@ def from_epoch(dt: timedelta) -> datetime:
 def snowflake_time(id: int) -> datetime:
     """Get the creation date of a snowflake ID."""
     return from_epoch(timedelta(milliseconds=id >> 16))
+
+
+def snowflake_range(min: Optional[datetime], max: Optional[datetime]) -> Tuple[int, int]:
+    min_id = 0 if min is None else int(1000 * since_epoch(min).total_seconds()) << 16
+    max_id = ((1 << 63) - 1) if max is None else int(1000 * since_epoch(max).total_seconds()) << 16
+
+    return (min_id, max_id | 0xFFFF)

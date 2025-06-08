@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Annotated, List, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
@@ -8,6 +9,7 @@ from pyodbc import IntegrityError  # type: ignore
 
 from ..config import DB_PAGINATION_QUERY
 from ..models import Detected, User
+from ..utils import snowflake_range
 
 
 __all__ = ()
@@ -46,8 +48,14 @@ async def get_detected(
     user_id: Annotated[Optional[int], Query(description="Filter by violator ID")] = None,
     min_id: Annotated[Optional[int], Query(description="Minimum value for detected violation ID in the result set.")] = None,
     max_id: Annotated[Optional[int], Query(description="Maximum value for detected violation ID in the result set.")] = None,
+    min_created_at: Optional[datetime] = None,
+    max_created_at: Optional[datetime] = None,
 ) -> List[Detected]:
     if user.permission_obj.administrator or user.permission_obj.manage_detected:
+        _min_id, _max_id = snowflake_range(min_created_at, max_created_at)
+        min_id = max(min_id or _min_id, _min_id)
+        max_id = min(max_id or _max_id, _max_id)
+
         return await Detected.query(
             detected_id=detected_id,
             detected_category=detected_category,

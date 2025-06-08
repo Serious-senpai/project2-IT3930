@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Annotated, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -8,6 +9,7 @@ from pyodbc import IntegrityError  # type: ignore
 
 from ..config import DB_PAGINATION_QUERY
 from ..models import Refutation, User, Violation
+from ..utils import snowflake_range
 
 
 __all__ = ()
@@ -48,11 +50,17 @@ async def get_refutations(
     user_id: Annotated[Optional[int], Query(description="Filter by violator ID")] = None,
     min_id: Annotated[Optional[int], Query(description="Minimum value for refutation ID in the result set.")] = None,
     max_id: Annotated[Optional[int], Query(description="Maximum value for refutation ID in the result set.")] = None,
+    min_created_at: Optional[datetime] = None,
+    max_created_at: Optional[datetime] = None,
 ) -> List[Refutation]:
     if user.permission_obj.administrator or user.permission_obj.view_users:
         related_to = None
     else:
         related_to = user.id
+
+    _min_id, _max_id = snowflake_range(min_created_at, max_created_at)
+    min_id = max(min_id or _min_id, _min_id)
+    max_id = min(max_id or _max_id, _max_id)
 
     return await Refutation.query(
         refutation_id=refutation_id,

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from datetime import datetime, timedelta, timezone
 from typing import Annotated, List, Literal, Optional
 
@@ -11,6 +12,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from ..config import DB_PAGINATION_QUERY
 from ..models import User
+from ..utils import snowflake_range
 
 
 __all__ = ()
@@ -35,11 +37,17 @@ async def get_users(
     user_phone: Annotated[Optional[str], Query(description="Filter by phone number")] = None,
     min_id: Annotated[Optional[int], Query(description="Minimum value for user ID in the result set.")] = None,
     max_id: Annotated[Optional[int], Query(description="Maximum value for user ID in the result set.")] = None,
+    min_created_at: Optional[datetime] = None,
+    max_created_at: Optional[datetime] = None,
 ) -> List[User]:
     if user.permission_obj.administrator or user.permission_obj.view_users:
         related_to = None
     else:
         related_to = user.id
+
+    _min_id, _max_id = snowflake_range(min_created_at, max_created_at)
+    min_id = max(min_id or _min_id, _min_id)
+    max_id = min(max_id or _max_id, _max_id)
 
     return await User.query(
         user_id=user_id,
